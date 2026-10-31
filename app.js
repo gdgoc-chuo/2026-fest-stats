@@ -318,7 +318,7 @@
 
     const box = $('#options');
     box.innerHTML = q.options.map((o, i) =>
-      `<button class="opt" role="option" tabindex="-1" data-i="${i}">${o.icon || ''}<span>${o.label}</span></button>`).join('');
+      `<button class="opt" role="option" tabindex="-1" data-i="${i}">${o.icon || ''}<span>${o.label.split('<wbr>').map((t) => `<i>${t}</i>`).join('<wbr>')}</span></button>`).join('');
     box.classList.remove('enter');
     void box.offsetWidth;
     box.classList.add('enter');

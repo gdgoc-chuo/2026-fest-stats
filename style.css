@@ -85,12 +85,15 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 .opt svg { height: clamp(48px, 10vh, 140px); width: auto; max-width: 90%; }
 /* 2段の人数アイコンは、1人あたりの大きさが1段のものとそろう高さにする */
 .opt svg.rows2 { height: clamp(96px, 20vh, 280px); }
+/* 文字はタイル幅に合わせて縮め、<wbr> の区切りより細かくは改行しない (「高校生以 / 下」のような改行を防ぐ) */
+.opt { container-type: inline-size; }
 .opt span {
-  font-size: clamp(20px, 2.5vw, 46px);
+  font-size: clamp(14px, min(2.5vw, 17cqi), 46px);
   font-weight: 700;
   line-height: 1.3;
   text-align: center;
 }
+.opt span i { font-style: normal; white-space: nowrap; }
 .opt.cur { background: var(--blue-strong); border-color: var(--blue-strong); color: var(--paper); }
 .opt.chosen { background: var(--green); border-color: var(--green); color: var(--paper); transform: scale(.96); }
 
