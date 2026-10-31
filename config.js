@@ -106,8 +106,8 @@ window.CONFIG = {
         },
         {
           value: "other_univ",
-          label: "他大学生",
-          short: "他大学生",
+          label: "他大生",
+          short: "他大生",
           icon: svg(
             '<rect x="3" y="3" width="12" height="12"/><rect x="9" y="9" width="12" height="12"/>',
           ),

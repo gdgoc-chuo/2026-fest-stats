@@ -13,7 +13,7 @@ const ATTRS = [
   ['student', '在学生'],
   ['applicant', '受験生・高校生以下'],
   ['alumni', '卒業生'],
-  ['other_univ', '他大学生'],
+  ['other_univ', '他大生'],
   ['family_friend', '在学生の家族・友人'],
   ['general', 'その他一般'],
 ];
