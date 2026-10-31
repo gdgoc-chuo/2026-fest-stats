@@ -60,21 +60,36 @@
   <div id="handptr" aria-hidden="true" hidden></div>
 
   <aside id="admin" hidden>
+    <h2>状態</h2>
     <dl id="admin-info"></dl>
-    <div class="admin-btns">
-      <button data-a="flush">今すぐ再送</button>
-      <button data-a="test"></button>
-      <button data-a="mute"></button>
-      <button data-a="dir">CSV保存先を選ぶ</button>
-      <button data-a="csv">CSV</button>
-      <button data-a="json">JSON</button>
-      <button data-a="hand"></button>
-      <button data-a="handsel"></button>
-      <button data-a="handview"></button>
-      <button data-a="device">端末名</button>
-      <button data-a="token">トークン消去</button>
-      <button data-a="close">閉じる</button>
+
+    <h2>設定</h2>
+    <button class="sw" role="switch" data-a="test"><span><b>テストモード</b><small>ON の間の回答は集計に含めない</small></span><i></i></button>
+    <button class="sw" role="switch" data-a="mute"><span><b>効果音</b></span><i></i></button>
+    <button class="sw" role="switch" data-a="hand"><span><b>カメラ操作</b></span><i></i></button>
+    <div class="row">
+      <b>決定の方法</b>
+      <div class="seg" role="radiogroup" aria-label="決定の方法" data-a="handsel">
+        <button role="radio" data-v="pinch">つまむ</button><button role="radio" data-v="dwell">手を止める</button>
+      </div>
     </div>
+    <div class="row">
+      <b>映像</b>
+      <div class="seg" role="radiogroup" aria-label="映像" data-a="handview">
+        <button role="radio" data-v="skeleton">骨格</button><button role="radio" data-v="mirror">鏡</button><button role="radio" data-v="none">なし</button>
+      </div>
+    </div>
+
+    <h2>操作</h2>
+    <div class="admin-btns">
+      <button data-a="flush">今すぐ送信</button>
+      <button data-a="dir">CSV保存先を選ぶ</button>
+      <button data-a="csv">CSVを書き出す</button>
+      <button data-a="json">JSONを書き出す</button>
+      <button data-a="device">端末名を変える</button>
+      <button data-a="token" class="danger">トークンを消去</button>
+    </div>
+    <button data-a="close" class="close">閉じる</button>
   </aside>
 </main>
 <script src="config.js"></script>

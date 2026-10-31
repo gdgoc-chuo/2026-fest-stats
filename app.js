@@ -693,23 +693,31 @@
   }
   function renderAdmin() {
     if ($('#admin').hidden) return;
-    const label = { unset: '未設定', ok: '正常', denied: '認証エラー', unknown: '未確認' }[S.tokenState];
+    // [項目, 値, 色 (ok: 緑 / warn: 黄 / err: 赤 / 空: なし)]
+    const token = { unset: ['未設定', 'err'], ok: ['正常', 'ok'], denied: ['認証エラー', 'err'], unknown: ['未確認', 'warn'] }[S.tokenState];
+    const csv = L.handle ? [`${L.name}/responses.csv (${L.rows} 行)`, 'ok'] : L.error ? [L.error, 'err'] : [FSA ? '未選択' : '非対応', 'warn'];
+    const cam = { off: ['OFF', ''], loading: ['準備中', 'warn'], ok: ['動作中', 'ok'], error: ['エラー', 'err'] }[S.handState];
     const info = [
-      ['トークン', label + (MOCK ? ' (mock)' : '')],
-      ['未送信キュー', outbox.length + ' 件'],
-      ['ローカル保存', responses.length + ' 件'],
-      ['CSV保存先', L.handle ? `${L.name}/responses.csv (${L.rows} 行)` : (L.error || (FSA ? '未選択' : '非対応'))],
-      ['カメラ', { off: 'OFF', loading: '準備中', ok: '動作中', error: 'エラー' }[S.handState] + (S.handError ? ` (${S.handError})` : '')],
-      ['最終同期', S.lastSync || '-'],
-      ['端末名', S.device],
-      ['バージョン', C.appVersion],
+      ['トークン', token[0] + (MOCK ? ' (mock)' : ''), token[1]],
+      ['未送信', outbox.length + ' 件', outbox.length ? 'warn' : 'ok'],
+      ['CSV保存先', csv[0], csv[1]],
+      ['カメラ', cam[0] + (S.handError ? ` (${S.handError})` : ''), cam[1]],
+      ['この端末の回答', responses.length + ' 件', ''],
+      ['最終同期', S.lastSync ? S.lastSync.slice(11, 19) : '-', ''],
+      ['端末名', S.device, ''],
+      ['バージョン', C.appVersion, ''],
     ];
-    $('#admin-info').innerHTML = info.map(([k, v]) => `<dt>${k}</dt><dd>${String(v).replace(/</g, '&lt;')}</dd>`).join('');
-    $('[data-a="test"]').textContent = 'テストモード: ' + (S.test ? 'ON' : 'OFF');
-    $('[data-a="mute"]').textContent = '効果音: ' + (S.mute ? 'OFF' : 'ON');
-    $('[data-a="hand"]').textContent = 'カメラ: ' + (S.hand.enabled ? 'ON' : 'OFF');
-    $('[data-a="handsel"]').textContent = '決定: ' + { pinch: 'つまむ', dwell: '手を止める' }[S.hand.select];
-    $('[data-a="handview"]').textContent = '映像: ' + { skeleton: '骨格', mirror: '鏡', none: 'なし' }[S.hand.preview];
+    $('#admin-info').innerHTML = info.map(([k, v, tone]) => `<dt>${k}</dt><dd class="${tone}">${String(v).replace(/</g, '&lt;')}</dd>`).join('');
+
+    const sw = (a, on) => $(`.sw[data-a="${a}"]`).setAttribute('aria-checked', on);
+    sw('test', S.test);
+    sw('mute', !S.mute);
+    sw('hand', S.hand.enabled);
+    for (const [a, v] of [['handsel', S.hand.select], ['handview', S.hand.preview]]) {
+      const seg = $(`.seg[data-a="${a}"]`);
+      seg.classList.toggle('off', !S.hand.enabled);
+      seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-checked', b.dataset.v === v));
+    }
   }
 
   const COLS = ['id', 'seq', 'status', 'is_test', 'party_size', 'attribute', 'with_kids', 'started_at', 'answered_at', 'duration_ms', 'q_ms', 'input', 'device', 'app_version'];
@@ -787,7 +795,11 @@
   }
 
   $('#admin').addEventListener('click', (e) => {
-    const a = e.target.closest('button')?.dataset.a;
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    // セグメント (並んだボタン) は親の data-a が操作、各ボタンの data-v が選んだ値
+    const a = btn.dataset.a || btn.closest('[data-a]')?.dataset.a;
+    const v = btn.dataset.v;
     if (a === 'flush') { retryAt = 0; checkStatus(); }
     else if (a === 'test') { S.test = !S.test; LS.set('test', S.test); setTokenState(S.tokenState); }
     else if (a === 'mute') { S.mute = !S.mute; LS.set('mute', S.mute); }
@@ -815,14 +827,13 @@
       if (!window.HAND) FEST.handState('error', 'hand.js 未読み込み');
       else if (S.hand.enabled) window.HAND.start();
       else { window.HAND.stop(); FEST.handState('off'); }
-    } else if (a === 'handsel') {
-      S.hand.select = S.hand.select === 'pinch' ? 'dwell' : 'pinch';
-      LS.set('hand.select', S.hand.select);
+    } else if (a === 'handsel' && v) {
+      S.hand.select = v;
+      LS.set('hand.select', v);
       renderHandUi();
-    } else if (a === 'handview') {
-      const order = ['skeleton', 'mirror', 'none'];
-      S.hand.preview = order[(order.indexOf(S.hand.preview) + 1) % order.length];
-      LS.set('hand.preview', S.hand.preview);
+    } else if (a === 'handview' && v) {
+      S.hand.preview = v;
+      LS.set('hand.preview', v);
       renderHandUi();
     } else if (a === 'close') closeAdmin();
     renderAdmin();

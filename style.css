@@ -221,16 +221,55 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   width: min(440px, 100%);
   background: var(--paper);
   border-left: 4px solid var(--blue);
-  padding: 24px;
+  padding: 8px 24px 24px;
   z-index: 40;
   overflow: auto;
   user-select: text;
+  font-size: 15px;
 }
-#admin dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 15px; margin-bottom: 24px; }
+#admin h2 { margin: 20px 0 8px; font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .08em; }
+#admin dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; }
 #admin dt { color: var(--muted); }
 #admin dd { font-variant-numeric: tabular-nums; word-break: break-all; }
+/* 状態の色: 緑 = 正常 / 黄 = 確認が必要 / 赤 = 対応が必要 */
+#admin dd.ok::before, #admin dd.warn::before, #admin dd.err::before {
+  content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; vertical-align: .1em;
+}
+#admin dd.ok::before { background: var(--green); }
+#admin dd.warn::before { background: var(--yellow); }
+#admin dd.err::before { background: var(--red); }
+
+/* 設定: ON/OFF はスイッチ、選択肢はセグメント */
+.sw, #admin .row {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  width: 100%; padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.sw { background: none; border-width: 0 0 1px; font: inherit; color: var(--ink); text-align: left; cursor: pointer; }
+.sw b, #admin .row b { display: block; font-size: 16px; }
+.sw small { display: block; margin-top: 2px; font-size: 13px; color: var(--muted); }
+.sw i { flex: none; position: relative; width: 44px; height: 24px; border-radius: 12px; background: var(--line); transition: background-color .15s; }
+.sw i::after {
+  content: ""; position: absolute; top: 3px; left: 3px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--paper); box-shadow: 0 1px 2px rgba(32, 33, 36, .3);
+  transition: transform .15s;
+}
+.sw[aria-checked="true"] i { background: var(--blue-strong); }
+.sw[aria-checked="true"] i::after { transform: translateX(20px); }
+/* テストモードが ON のままだと本番の回答が集計から外れるので、赤で目立たせる */
+.sw[data-a="test"][aria-checked="true"] i { background: var(--red); }
+.sw:focus-visible { outline: 2px solid var(--blue-strong); outline-offset: 2px; }
+
+.seg { display: flex; flex: none; border: 2px solid var(--line); border-radius: 2px; }
+.seg button { padding: 6px 12px; background: var(--paper); color: var(--ink); border: 0; font: 700 14px var(--font); cursor: pointer; }
+.seg button + button { border-left: 2px solid var(--line); }
+.seg button[aria-checked="true"] { background: var(--blue-strong); color: var(--paper); }
+.seg.off { opacity: .4; }
+
+/* 操作: 押すと何かが起きるボタン */
 .admin-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.admin-btns button {
+.admin-btns button, #admin .close {
   font: 700 15px var(--font);
   padding: 12px;
   background: var(--paper);
@@ -239,7 +278,12 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   border-radius: 2px;
   cursor: pointer;
 }
-.admin-btns button:hover, .admin-btns button:focus-visible { background: var(--blue-strong); border-color: var(--blue-strong); color: var(--paper); outline: none; }
+.admin-btns button:hover, .admin-btns button:focus-visible, #admin .close:hover, #admin .close:focus-visible {
+  background: var(--blue-strong); border-color: var(--blue-strong); color: var(--paper); outline: none;
+}
+.admin-btns .danger { color: var(--red); }
+.admin-btns .danger:hover, .admin-btns .danger:focus-visible { background: var(--red); border-color: var(--red); color: var(--paper); }
+#admin .close { width: 100%; margin-top: 24px; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
