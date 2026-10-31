@@ -7,12 +7,14 @@ const MODEL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/h
 
 const C = window.CONFIG.hand;
 const FEST = window.FEST;
-const view = document.querySelector('#handview');
-const g = view.getContext('2d');
-const W = 320;
-const H = 240;
-view.width = W;
-view.height = H;
+const layer = document.querySelector('#handlayer');
+const g = layer.getContext('2d');
+function fitLayer() {
+  layer.width = innerWidth * devicePixelRatio;
+  layer.height = innerHeight * devicePixelRatio;
+}
+fitLayer();
+addEventListener('resize', fitLayer);
 
 let landmarker = null;
 let video = null;
@@ -26,7 +28,12 @@ let sx = null;
 let sy = null;
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-const clamp01 = (v) => Math.min(1, Math.max(0, v));
+const clamp = (v, max) => Math.min(max, Math.max(0, v));
+
+// カメラ座標 (0〜1) から画面座標へ。映像は左右反転して来場者の視点と一致させる
+// リング・骨格・映像のすべてをこの対応で描き、指先とリングの位置をそろえる
+const toScreenX = (x) => ((1 - x - C.xRange[0]) / (C.xRange[1] - C.xRange[0])) * innerWidth;
+const toScreenY = (y) => ((y - C.yRange[0]) / (C.yRange[1] - C.yRange[0])) * innerHeight;
 
 async function createLandmarker() {
   const files = await FilesetResolver.forVisionTasks(WASM);
@@ -90,7 +97,8 @@ function stop() {
   if (video) video.srcObject = null;
   pinched = false;
   sx = sy = null;
-  g.clearRect(0, 0, W, H);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.clearRect(0, 0, layer.width, layer.height);
   FEST.hand({ present: false });
 }
 
@@ -117,9 +125,8 @@ function track(lm) {
   const palm = [0, 5, 9, 13, 17].map((i) => lm[i]);
   const cx = palm.reduce((s, p) => s + p.x, 0) / palm.length;
   const cy = palm.reduce((s, p) => s + p.y, 0) / palm.length;
-  // カメラ映像を左右反転し、来場者の視点と一致させる
-  const x = clamp01((1 - cx - C.xRange[0]) / (C.xRange[1] - C.xRange[0])) * innerWidth;
-  const y = clamp01((cy - C.yRange[0]) / (C.yRange[1] - C.yRange[0])) * innerHeight;
+  const x = clamp(toScreenX(cx), innerWidth);
+  const y = clamp(toScreenY(cy), innerHeight);
   sx = sx === null ? x : sx + (x - sx) * C.smooth;
   sy = sy === null ? y : sy + (y - sy) * C.smooth;
 
@@ -131,24 +138,40 @@ function track(lm) {
 }
 
 function draw(lm) {
+  g.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  g.clearRect(0, 0, innerWidth, innerHeight);
   const mode = FEST.settings().preview;
-  if (mode === 'none' || view.hidden) return;
-  g.clearRect(0, 0, W, H);
+  if (mode === 'none' || layer.hidden || !FEST.active()) return;
+
   if (mode === 'mirror') {
+    // 映像もリングと同じ対応で画面全体に引き伸ばし、画面が見えるよう薄く重ねる
+    const left = toScreenX(1);
+    const top = toScreenY(0);
+    const w = toScreenX(0) - left;
+    const h = toScreenY(1) - top;
     g.save();
-    g.translate(W, 0);
+    g.globalAlpha = C.mirrorOpacity;
+    g.translate(left + w, top);
     g.scale(-1, 1);
-    g.drawImage(video, 0, 0, W, H);
+    g.drawImage(video, 0, 0, w, h);
     g.restore();
-  } else {
-    g.fillStyle = '#f1f3f4';
-    g.fillRect(0, 0, W, H);
+    // 映像の上に選択肢の輪郭を描き、映像越しでも選択肢の位置が分かるようにする
+    for (const el of document.querySelectorAll('#options .opt')) {
+      const r = el.getBoundingClientRect();
+      if (!r.width) continue;
+      const cur = el.classList.contains('cur');
+      g.lineWidth = cur ? 8 : 4;
+      g.strokeStyle = cur ? '#1a73e8' : '#202124';
+      g.strokeRect(r.left + g.lineWidth / 2, r.top + g.lineWidth / 2, r.width - g.lineWidth, r.height - g.lineWidth);
+    }
   }
+
   if (!lm) return;
-  const P = (p) => [(1 - p.x) * W, p.y * H];
-  g.lineWidth = 4;
+  const P = (p) => [toScreenX(p.x), toScreenY(p.y)];
+  g.lineWidth = 6;
   g.lineCap = 'round';
-  g.strokeStyle = mode === 'mirror' ? '#fff' : '#202124';
+  g.lineJoin = 'round';
+  g.strokeStyle = 'rgba(32, 33, 36, .55)';
   g.beginPath();
   for (const { start: a, end: b } of HandLandmarker.HAND_CONNECTIONS) {
     const [ax, ay] = P(lm[a]);
@@ -162,7 +185,7 @@ function draw(lm) {
     g.fillStyle = color;
     const [x, y] = P(lm[i]);
     g.beginPath();
-    g.arc(x, y, pinched ? 10 : 6, 0, Math.PI * 2);
+    g.arc(x, y, pinched ? 18 : 12, 0, Math.PI * 2);
     g.fill();
   }
 }

@@ -643,13 +643,15 @@
   function renderHandUi() {
     const on = S.hand.enabled && S.handState === 'ok';
     $('#handhint').textContent = on ? C.hand.hint[S.hand.select] : '';
-    $('#handview').hidden = !on || S.hand.preview === 'none';
+    $('#handlayer').hidden = !on || S.hand.preview === 'none';
     if (!on) ptr.hidden = true;
   }
 
   // hand.js (ES module) との連携用インターフェース
   window.FEST = {
     settings: () => S.hand,
+    // 骨格・映像を描くのは来場者が操作する画面だけ (管理パネル表示中は描かない)
+    active: () => $('#admin').hidden && (S.screen === 'question' || S.screen === 'result'),
     hand: onHand,
     handState(st, err) {
       S.handState = st;

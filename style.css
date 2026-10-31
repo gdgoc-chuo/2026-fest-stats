@@ -104,7 +104,8 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 .counter { font-size: clamp(16px, 1.6vw, 28px); color: var(--muted); text-align: right; margin-left: auto; }
 .counter b { color: var(--blue-strong); font-size: 1.6em; margin: 0 .15em; font-variant-numeric: tabular-nums; }
 .handhint { font-size: clamp(16px, 1.6vw, 28px); font-weight: 700; }
-#handview { width: 160px; height: 120px; flex: none; border: 2px solid var(--line); border-radius: 2px; }
+/* カメラ操作: 骨格・映像を画面全体に重ねる。リングと同じ座標の対応で描くので、指先とリングの位置がそろう */
+#handlayer { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15; }
 
 /* カメラ操作: 手の位置を示すポインタリング。ピンチ中は塗りつぶし表示 */
 #handptr {
