@@ -215,7 +215,7 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   pointer-events: none;
   z-index: 32;
 }
-#holdbar.run { animation: hold var(--hold, 3s) linear forwards; }
+#holdbar.run { animation: hold var(--hold, 2s) linear forwards; }
 @keyframes hold { to { clip-path: inset(0 0 0 0); } }
 
 /* 管理パネル */
@@ -291,5 +291,5 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
   .timer.run { animation-duration: var(--dur, 8s) !important; }
-  #holdbar.run { animation-duration: var(--hold, 3s) !important; }
+  #holdbar.run { animation-duration: var(--hold, 2s) !important; }
 }

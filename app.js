@@ -505,7 +505,7 @@
   let holdTimer = null;
 
   // 管理パネルを開く長押し判定。押下中は画面左下にプログレスバーをアニメーション表示
-  const HOLD_MS = 3000;
+  const HOLD_MS = 2000;
   function startHold() {
     clearTimeout(holdTimer);
     const bar = $('#holdbar');
@@ -528,7 +528,7 @@
     e.preventDefault();
     if (e.repeat) return;
     held.add(act);
-    // 「戻る」＋「決定」キーの3秒間長押しで管理パネルを表示
+    // 「戻る」＋「決定」キーの2秒間長押しで管理パネルを表示
     if (held.has('ok') && held.has('back')) {
       startHold();
       return;
@@ -675,7 +675,7 @@
     },
   };
 
-  // マウス操作端末向け: 画面左下の領域を3秒間長押しすると管理パネルを表示
+  // マウス操作端末向け: 画面左下の領域を2秒間長押しすると管理パネルを表示
   const hot = $('#hot');
   hot.addEventListener('pointerdown', startHold);
   for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) hot.addEventListener(ev, cancelHold);
