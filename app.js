@@ -82,6 +82,18 @@
     } catch { return null; }
     return actx;
   }
+  // 全体の音量。各音の音量はこれを掛けた大きさになる
+  // 和音が重なっても音が割れないよう、コンプレッサーを通してから出力する
+  const VOLUME = 2;
+  let out = null;
+  function master(a) {
+    if (!out) {
+      out = a.createGain();
+      out.gain.value = VOLUME;
+      out.connect(a.createDynamicsCompressor()).connect(a.destination);
+    }
+    return out;
+  }
   function tone(freq, at = 0, dur = 0.12, type = 'triangle', gain = 0.16) {
     const a = audio();
     if (!a) return;
@@ -93,7 +105,7 @@
     g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(gain, t + 0.008);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g).connect(a.destination);
+    o.connect(g).connect(master(a));
     o.start(t);
     o.stop(t + dur + 0.02);
   }
