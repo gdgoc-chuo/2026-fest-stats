@@ -382,6 +382,7 @@
     outbox.push(row.id);
     LS.set('responses', responses);
     LS.set('outbox', outbox);
+    saveLocal(row);
     flush(true);
     if (status === 'complete') showResult(row);
     else resetSession();
@@ -583,6 +584,7 @@
       ['トークン', label + (MOCK ? ' (mock)' : '')],
       ['未送信キュー', outbox.length + ' 件'],
       ['ローカル保存', responses.length + ' 件'],
+      ['CSV保存先', L.handle ? `${L.name}/responses.csv (${L.rows} 行)` : (L.error || (FSA ? '未選択' : '非対応'))],
       ['最終同期', S.lastSync || '-'],
       ['端末名', S.device],
       ['バージョン', C.appVersion],
@@ -602,6 +604,70 @@
   }
   const stamp = () => jst(new Date()).slice(0, 19).replace(/[-:]/g, '').replace('T', '-');
 
+  // ローカル CSV (File System Access API)
+  // Edge のキオスクは InPrivate で localStorage が残らないため、選んだフォルダの responses.csv に1件ずつ追記して控えにする
+  const FSA = typeof window.showDirectoryPicker === 'function';
+  const CSV_BOM = String.fromCharCode(0xfeff); // Excel で文字化けしないよう UTF-8 の BOM を付ける
+  const L = { handle: null, name: '', rows: 0, error: '', queue: Promise.resolve() };
+  const csvEsc = (v) => (/[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : v);
+  const csvLine = (r) => COLS.map((c) => csvEsc(r[c] ?? '')).join(',') + '\r\n';
+
+  async function appendTo(handle, text) {
+    const w = await handle.createWritable({ keepExistingData: true });
+    try {
+      await w.seek((await handle.getFile()).size);
+      await w.write(text);
+      await w.close();
+    } catch (e) {
+      await w.abort().catch(() => {});
+      throw e;
+    }
+  }
+
+  function renderLocalState() {
+    // 保存先が未選択のあいだ、左下に朱色の四角を出してスタッフに知らせる
+    $('#ldot').hidden = !FSA || !!L.handle;
+  }
+
+  async function pickLocalDir() {
+    if (!FSA) { L.error = 'このブラウザは非対応'; return; }
+    try {
+      const dir = await window.showDirectoryPicker({ id: 'fest-stats', mode: 'readwrite' });
+      const handle = await dir.getFileHandle('responses.csv', { create: true });
+      const text = await (await handle.getFile()).text();
+      // 既にファイルにある回答は重複させず、無いものだけ足す
+      const have = new Set(text.split(/\r?\n/).slice(1).filter(Boolean).map((l) => l.split(',')[0]));
+      const missing = responses.filter((r) => !have.has(r.id));
+      const out = (text.trim() ? '' : CSV_BOM + COLS.join(',') + '\r\n') + missing.map(csvLine).join('');
+      if (out) await appendTo(handle, out);
+      L.handle = handle;
+      L.name = dir.name;
+      L.rows = have.size + missing.length;
+      L.error = '';
+    } catch (e) {
+      if (e.name !== 'AbortError') L.error = String(e.message || e);
+    }
+    renderLocalState();
+    renderAdmin();
+  }
+
+  // 回答が確定するたびに呼ぶ。書き込みは順番に1件ずつ行う
+  function saveLocal(row) {
+    if (!L.handle) return;
+    L.queue = L.queue.then(async () => {
+      try {
+        await appendTo(L.handle, csvLine(row));
+        L.rows++;
+        L.error = '';
+      } catch (e) {
+        L.error = String(e.message || e);
+        L.handle = null;
+      }
+      renderLocalState();
+      renderAdmin();
+    });
+  }
+
   $('#admin').addEventListener('click', (e) => {
     const a = e.target.closest('button')?.dataset.a;
     if (a === 'flush') { retryAt = 0; checkStatus(); }
@@ -609,9 +675,10 @@
     else if (a === 'mute') { S.mute = !S.mute; LS.set('mute', S.mute); }
     else if (a === 'csv') {
       const pending = new Set(outbox);
-      const esc = (v) => (/[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : v);
-      const lines = [[...COLS, 'synced'].join(',')].concat(responses.map((r) => [...COLS.map((c) => esc(r[c] ?? '')), pending.has(r.id) ? 0 : 1].join(',')));
-      download(`fest-${S.device}-${stamp()}.csv`, '﻿' + lines.join('\r\n'), 'text/csv');
+      const lines = [[...COLS, 'synced'].join(',')].concat(responses.map((r) => [...COLS.map((c) => csvEsc(r[c] ?? '')), pending.has(r.id) ? 0 : 1].join(',')));
+      download(`fest-${S.device}-${stamp()}.csv`, CSV_BOM + lines.join('\r\n'), 'text/csv');
+    } else if (a === 'dir') {
+      pickLocalDir();
     } else if (a === 'json') {
       download(`fest-${S.device}-${stamp()}.json`, JSON.stringify({ responses, outbox }, null, 1), 'application/json');
     } else if (a === 'device') {
@@ -639,6 +706,7 @@
   setInterval(() => flush(), 10000);
   setInterval(checkStatus, 5 * 60 * 1000);
 
+  renderLocalState();
   setTokenState(S.token ? 'unknown' : 'unset');
   checkStatus();
 })();
