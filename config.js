@@ -1,5 +1,5 @@
-// 当日はこのファイルだけ触れば済むようにする。
-// 属性コードは gas/Code.gs の ATTRS と揃えること。
+// 当日はこのファイルの設定値を調整するだけで運用できるようにする
+// 属性コードの値は gas/Code.gs の ATTRS 定義と一致させること
 
 const svg = (inner) =>
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${inner}</svg>`;
@@ -7,7 +7,7 @@ const svg = (inner) =>
 const PERSON =
   '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c0-4.5 3-7.5 7-7.5s7 3 7 7.5"/>';
 
-// 人数アイコン: 人型を n 個並べる (plus=true で末尾に +)
+// 人数アイコン生成: 人型ピクトグラムを n 個配置 (plus=true の場合は末尾に「+」を付加)
 const persons = (n, plus) => {
   const w = 14 * n + (plus ? 14 : 0);
   let s = "";
@@ -19,13 +19,13 @@ const persons = (n, plus) => {
 };
 
 window.CONFIG = {
-  // GAS ウェブアプリの URL (デプロイ後に貼る)
+  // GAS ウェブアプリの URL (デプロイ後に設定)
   GAS_URL:
     "https://script.google.com/macros/s/AKfycbxL4fiT5wXCz-fned7VieQJmHHGWwqG6sP9zwKkEuSdidbeFPpKd-CPdfh4DWsWqXQ/exec",
 
   appVersion: "2026-fest-1",
 
-  // キー割り当て (KeyboardEvent.code)。カスタムキーボードに合わせて変更
+  // キー割り当て (KeyboardEvent.code)。使用するカスタムキーボードに合わせて変更
   keys: {
     left: "ArrowLeft",
     right: "ArrowRight",
@@ -33,17 +33,17 @@ window.CONFIG = {
     back: "Backspace",
   },
 
-  idleWarnSec: 20, // 回答途中でこの秒数操作がなければ警告
-  idleCountdownSec: 10, // 警告からリセットまでの秒数
-  resultSec: 8, // 結果画面の表示秒数
-  milestoneEvery: 50, // N 組ごとにキリ番演出
-  milestoneText: "受付でお菓子をどうぞ",
+  idleWarnSec: 20, // 回答途中で無操作状態がこの秒数続いた場合に警告を表示
+  idleCountdownSec: 10, // 警告表示から初期画面へリセットされるまでの秒数
+  resultSec: 8, // 結果画面を表示する秒数
+  milestoneEvery: 50, // 指定した組数ごとにキリ番 (記念) 演出を表示
+  milestoneText: "受付でお菓子をお受け取りください！",
 
   questions: [
     {
       id: "party_size",
-      prompt: "ご一緒の人数は？",
-      hint: "1グループにつき1回、代表の方がお答えください",
+      prompt: "何名様でお越しですか？",
+      hint: "1グループにつき1回、代表者の方がご回答ください",
       options: [
         { value: 1, label: "1人", icon: persons(1) },
         { value: 2, label: "2人", icon: persons(2) },
@@ -54,8 +54,8 @@ window.CONFIG = {
     },
     {
       id: "attribute",
-      prompt: "あなたは？",
-      hint: "当てはまるうち、左のものを選んでください",
+      prompt: "当てはまる区分をお選びください",
+      hint: "複数当てはまる場合は、より左側の項目をお選びください",
       options: [
         {
           value: "student",
@@ -107,7 +107,7 @@ window.CONFIG = {
     },
     {
       id: "with_kids",
-      prompt: "小学生以下の<wbr>お子さまと<wbr>ご一緒？",
+      prompt: "小学生以下の<wbr>お子さまと<wbr>ご一緒ですか？",
       hint: "",
       skipIf: (a) => a.party_size === 1,
       options: [

@@ -1,14 +1,14 @@
-// スプレッドシートに紐づいた Apps Script (拡張機能 → Apps Script) に貼る。
-// 初回は setup() を実行してシート作成とトークン発行を行う。
+// スプレッドシートのコンテナバインドスクリプト (拡張機能 → Apps Script) に配置して使用する
+// 初回導入時は setup() を実行してシート作成および認証トークンの発行を行う
 
 const SHEET = 'responses';
 const SUMMARY = '集計';
 const TZ = 'Asia/Tokyo';
 const COLS = ['received_at', 'id', 'seq', 'status', 'is_test', 'party_size', 'attribute', 'with_kids',
   'started_at', 'answered_at', 'duration_ms', 'q_ms', 'input', 'device', 'app_version'];
-// 自動で日付に変換されると ms が落ちるので文字列で持つ列
+// 日付型への自動変換によるミリ秒精度の欠落を防ぐため、文字列として保持する列
 const TEXT_COLS = ['received_at', 'id', 'started_at', 'answered_at', 'q_ms', 'device', 'app_version', 'attribute', 'status'];
-// config.js の attribute の選択肢と揃える
+// config.js の attribute 選択肢の定義と一致させること
 const ATTRS = [
   ['student', '在学生'],
   ['applicant', '受験生・高校生以下'],
@@ -46,7 +46,7 @@ function doPost(e) {
   return json_({ ok: false, error: 'bad_action' });
 }
 
-// 既にある id は追記せず、受理済みとして返す (端末側はそれを見て outbox から消す)
+// 登録済みの id は重複追記せず、受理済みとして返却 (端末側はこの応答を受けて outbox から削除)
 function append_(sh, rows) {
   const last = sh.getLastRow();
   const idCol = COLS.indexOf('id') + 1;
@@ -62,7 +62,7 @@ function append_(sh, rows) {
     values.push(COLS.map((c) => (c === 'received_at' ? now : clean_(r[c]))));
   }
   if (!values.length) return accepted;
-  // 行が足りなければ足す (書式は直前の行から引き継がれる)
+  // シートの行数が不足している場合は必要行を追加 (直前行の書式が引き継がれる)
   if (last + values.length > sh.getMaxRows()) sh.insertRowsAfter(sh.getMaxRows(), values.length + 500);
   sh.getRange(last + 1, 1, values.length, COLS.length).setValues(values);
   return accepted;
@@ -108,8 +108,7 @@ function json_(o) {
   return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 }
 
-// ---------- 初回だけ手動で実行 ----------
-
+// 初回セットアップ用関数 (手動実行)
 function setup() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   ss.setSpreadsheetTimeZone(TZ);
@@ -122,7 +121,7 @@ function setup() {
   Logger.log('TOKEN: ' + props.getProperty('TOKEN'));
 }
 
-// トークンを作り直す (漏れたとき用)。端末側も再登録が必要
+// 認証トークンの再発行 (トークン流出時など)。再発行後は各端末でも再登録が必要
 function rotateToken() {
   PropertiesService.getScriptProperties().deleteProperty('TOKEN');
   setup();
@@ -137,12 +136,12 @@ function setupSummary_() {
   const rows = [];
   const push = (...r) => rows.push(r.concat(['', '', '', '']).slice(0, 4));
 
-  push('テストを除く完了回答', '', '', '');
+  push('有効回答 (テストデータを除く完了分)', '', '', '');
   push('組数', `=COUNTIFS(${base})`);
-  push('人数 (5人以上は5で計上)', `=SUMIFS(${L('party_size')},${base})`);
-  push('途中離脱 (partial)', `=COUNTIFS(${L('status')},"partial",${L('is_test')},0)`);
+  push('総人数 (5人以上は5名として計上)', `=SUMIFS(${L('party_size')},${base})`);
+  push('途中離脱数 (未完了)', `=COUNTIFS(${L('status')},"partial",${L('is_test')},0)`);
   push('');
-  push('属性', '組数', '人数', '組の割合');
+  push('来場者区分', '組数', '総人数', '構成比');
   const attrStart = rows.length + 1;
   for (const [code, label] of ATTRS) {
     const r = rows.length + 1;
@@ -150,18 +149,18 @@ function setupSummary_() {
       `=SUMIFS(${L('party_size')},${base},${L('attribute')},"${code}")`, `=IFERROR(B${r}/$B$2,0)`);
   }
   push('');
-  push('人数', '組数', '', '組の割合');
+  push('グループ人数', '組数', '', '割合');
   for (let n = 1; n <= 5; n++) {
     const r = rows.length + 1;
     push(n === 5 ? '5人以上' : `${n}人`, `=COUNTIFS(${base},${L('party_size')},${n})`, '', `=IFERROR(B${r}/$B$2,0)`);
   }
   push('');
-  push('子どもづれ (2人以上の組)', '組数', '', '割合');
+  push('お子様連れ (2人以上の組)', '組数', '', '割合');
   const kr = rows.length + 1;
   push('はい', `=COUNTIFS(${base},${L('with_kids')},1)`, '', `=IFERROR(B${kr}/(B${kr}+B${kr + 1}),0)`);
   push('いいえ', `=COUNTIFS(${base},${L('with_kids')},0)`, '', `=IFERROR(B${kr + 1}/(B${kr}+B${kr + 1}),0)`);
   push('');
-  push('時間帯 (回答時刻)', '組数', '人数', '');
+  push('時間帯別 (回答時刻基準)', '組数', '総人数', '');
   for (let h = 8; h <= 20; h++) {
     const hh = ('0' + h).slice(-2);
     push(`${hh}:00-`, `=COUNTIFS(${base},${L('answered_at')},"*T${hh}:*")`,

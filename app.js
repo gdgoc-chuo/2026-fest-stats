@@ -5,25 +5,25 @@
   const $ = (s) => document.querySelector(s);
   const MOCK = new URLSearchParams(location.search).has('mock');
 
-  // ---------- localStorage ----------
+  // localStorage
   const LS = {
     get(k, d) {
       try { const v = localStorage.getItem('fest.' + k); return v === null ? d : JSON.parse(v); } catch { return d; }
     },
     set(k, v) {
-      try { localStorage.setItem('fest.' + k, JSON.stringify(v)); } catch { /* 容量超過などは無視 (サーバーには送られる) */ }
+      try { localStorage.setItem('fest.' + k, JSON.stringify(v)); } catch { /* 容量上限超過などのエラーは無視 (データはサーバー側へ送信されるため) */ }
     },
     del(k) { try { localStorage.removeItem('fest.' + k); } catch { /* noop */ } },
   };
 
-  // #setup=<token> で開かれたら保存して URL から消す
+  // #setup=<token> 付きでアクセスされた場合はトークンを保存し、URL からパラメータを除去
   const setup = location.hash.match(/^#setup=([^&]+)$/);
   if (setup) {
     LS.set('token', decodeURIComponent(setup[1]));
     history.replaceState(null, '', location.pathname + location.search);
   }
 
-  // 開きっぱなしのタブに #setup=… を貼られた場合 (ハッシュ変更だけではページが再読込されない)
+  // 既に開いているタブに #setup=…… が入力された場合に対応 (ハッシュ変更のみではページが再読込されないため)
   addEventListener('hashchange', () => { if (/^#setup=/.test(location.hash)) location.reload(); });
 
   const S = {
@@ -54,8 +54,8 @@
   let responses = LS.get('responses', []);
   let outbox = LS.get('outbox', []);
 
-  // ---------- 時刻 ----------
-  // 端末のタイムゾーンに関係なく JST の ISO 文字列 (ms 付き)
+  // 時刻処理
+  // 端末のタイムゾーン設定に依存せず、常に JST (日本標準時) の ISO 文字列 (ミリ秒付き) を生成
   const jst = (d) => new Date(d.getTime() + 9 * 3600e3).toISOString().replace('Z', '+09:00');
   const uuid = () =>
     crypto.randomUUID ? crypto.randomUUID()
@@ -64,7 +64,7 @@
         return (c === 'x' ? r : (r & 3) | 8).toString(16);
       });
 
-  // ---------- 音 (WebAudio で合成) ----------
+  // 音声効果 (Web Audio API による合成)
   const SCALE = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66];
   let actx = null;
   function audio() {
@@ -99,7 +99,7 @@
     tick: () => tone(330, 0, 0.06, 'sine', 0.06),
   };
 
-  // ---------- エフェクト (幾何学図形を弾けさせる) ----------
+  // 演出エフェクト (幾何学パーティクルの放出)
   const fx = $('#fx');
   const ctx = fx.getContext('2d');
   const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -138,7 +138,7 @@
     for (const p of parts) {
       p.vy += 0.45;
       p.vx *= 0.985;
-      p.x += p.vx;
+      p.x += p.vy;
       p.y += p.vy;
       p.r += p.vr;
       p.life -= 0.012;
@@ -159,7 +159,7 @@
     if (!raf) ctx.clearRect(0, 0, fx.width, fx.height);
   }
 
-  // ---------- 集計 ----------
+  // 集計処理
   const emptyStats = () => ({ groups: 0, people: 0, attr: {}, kids: 0 });
   function addRow(st, r) {
     if (r.status !== 'complete' || r.is_test) return;
@@ -168,7 +168,7 @@
     if (r.attribute) st.attr[r.attribute] = (st.attr[r.attribute] || 0) + 1;
     if (r.with_kids === 1) st.kids++;
   }
-  // サーバー集計 + 未送信分。サーバーに一度も届いていなければローカルの全件
+  // サーバー集計値に未送信分を加算。一度もサーバーと同期していない場合はローカルの全件を集計
   function currentStats() {
     const base = S.serverStats;
     const st = base ? { ...base, attr: { ...base.attr } } : emptyStats();
@@ -177,7 +177,7 @@
     return st;
   }
 
-  // ---------- 通信 ----------
+  // 通信
   async function post(payload) {
     if (MOCK) {
       await new Promise((r) => setTimeout(r, 300));
@@ -191,7 +191,7 @@
     const ac = new AbortController();
     const to = setTimeout(() => ac.abort(), 15000);
     try {
-      // text/plain で送るとプリフライトが発生しない
+      // text/plain で送信することで CORS プリフライトリクエストの発生を防止
       const res = await fetch(C.GAS_URL, {
         method: 'POST',
         body: JSON.stringify({ ...payload, token: S.token }),
@@ -262,7 +262,7 @@
     renderAdmin();
   }
 
-  // ---------- 画面 ----------
+  // 画面制御
   function show(name) {
     S.screen = name;
     for (const id of ['question', 'result', 'setup']) $('#s-' + id).hidden = id !== name;
@@ -314,7 +314,7 @@
 
   function renderCounter() {
     const st = currentStats();
-    $('#counter').innerHTML = S.qi === 0 && st.groups > 0 ? `本日<b>${st.groups.toLocaleString()}</b>組が回答` : '';
+    $('#counter').innerHTML = S.qi === 0 && st.groups > 0 ? `本日<b>${st.groups.toLocaleString()}</b>組が回答済み` : '';
   }
 
   function move(d) {
@@ -333,7 +333,7 @@
     S.cursor = i;
     S.answers[q.id] = o.value;
     S.qMs[q.id] = Math.round(performance.now() - S.qEnter);
-    // スキップされることになった設問の回答は消す
+    // 条件分岐によりスキップ対象となった設問の回答データを削除
     for (const qq of C.questions) if (qq.skipIf && qq.skipIf(S.answers)) delete S.answers[qq.id];
 
     const el = document.querySelectorAll('.opt')[i];
@@ -396,7 +396,7 @@
     const milestone = !row.is_test && n > 0 && n % C.milestoneEvery === 0;
 
     $('#res-n').innerHTML = `<span class="pre">本日</span>${n.toLocaleString()}<small>組目</small>`;
-    $('#res-sub').innerHTML = `これまでの来場 <b>${st.people.toLocaleString()}</b> 人`;
+    $('#res-sub').innerHTML = `これまでの総来場者数 <b>${st.people.toLocaleString()}</b> 人`;
     const ms = $('#res-milestone');
     ms.hidden = !milestone;
     ms.textContent = milestone ? C.milestoneText : '';
@@ -405,8 +405,8 @@
     const pct = (v) => (st.groups ? Math.round(((st.attr[v] || 0) / st.groups) * 100) : 0);
     const mine = attrQ.options.find((o) => o.value === row.attribute);
     $('#res-lead').innerHTML = mine
-      ? `あなたと同じ「${mine.short}」は<b>${pct(mine.value)}</b>%`
-      : 'ありがとうございました';
+      ? `あなたと同じ「${mine.short}」の方は<b>${pct(mine.value)}</b>%`
+      : 'ご回答ありがとうございました';
     const max = Math.max(1, ...attrQ.options.map((o) => st.attr[o.value] || 0));
     $('#res-bars').innerHTML = attrQ.options.map((o) => {
       const me = o.value === row.attribute ? ' me' : '';
@@ -433,7 +433,7 @@
     }
   }
 
-  // ---------- 無操作リセット ----------
+  // 無操作時の自動リセット
   let warnShown = false;
   let lastWarnSec = 0;
   function showWarn(sec) {
@@ -455,7 +455,7 @@
     const idle = (Date.now() - S.last) / 1000;
     if (S.screen !== 'question' || !$('#admin').hidden) { hideWarn(); return; }
     if (!Object.keys(S.answers).length) {
-      // カーソルを動かしただけで立ち去った場合は黙って初期状態に戻す
+      // 未回答のままカーソル移動のみで離脱した場合は、警告を出さずに初期状態へリセット
       if (S.startedAt && idle >= C.idleWarnSec) resetSession();
       return;
     }
@@ -463,12 +463,12 @@
     if (idle >= limit) { hideWarn(); finish('partial'); } else if (idle >= C.idleWarnSec) showWarn(Math.ceil(limit - idle));
   }, 200);
 
-  // 入力があったら呼ぶ。警告中だった場合は true (その入力は警告解除だけに使う)
+  // 操作入力時に呼び出し。警告表示中だった場合は true を返し、その入力は警告解除のみに消費
   function touch() {
     audio();
     S.last = Date.now();
     if (warnShown) { hideWarn(); return true; }
-    // 待機中の設問1は表示時刻ではなく最初の操作から計測する
+    // 待機中の第1問は画面表示時刻ではなく最初の操作から計測
     if (S.screen === 'question' && !S.startedAt) {
       S.startedAt = new Date();
       S.qEnter = performance.now();
@@ -476,7 +476,7 @@
     return false;
   }
 
-  // ---------- 入力: キー ----------
+  // キーボード入力
   const K = C.keys;
   const actionOf = (code) => (code === K.left ? 'left' : code === K.right ? 'right' : code === K.ok ? 'ok' : code === K.back ? 'back' : null);
   const held = new Set();
@@ -490,7 +490,7 @@
     e.preventDefault();
     if (e.repeat) return;
     held.add(act);
-    // 戻る + 決定 を3秒長押しで管理パネル
+    // 「戻る」＋「決定」キーの3秒間長押しで管理パネルを表示
     if (held.has('ok') && held.has('back')) {
       clearTimeout(holdTimer);
       holdTimer = setTimeout(openAdmin, 3000);
@@ -517,12 +517,12 @@
         pick(S.cursor);
       } else if (act === 'back') back();
     } else if (S.screen === 'result') {
-      // 最後の決定キーの連打で結果を読み飛ばさないよう少し待つ
+      // 最終設問での決定キー連打による結果画面の誤スキップを防止するため、一定時間待機
       if (Date.now() - S.resultAt > 1200) resetSession();
     }
   }
 
-  // ---------- 入力: マウス ----------
+  // マウス / タッチ入力
   addEventListener('pointerdown', (e) => {
     if (e.target.closest('#admin, #hot')) return;
     S.swallowClick = touch();
@@ -544,12 +544,12 @@
     if (!S.swallowClick) input('ok');
   });
 
-  // マウスのみのスタッフ向け: 左下隅を3秒長押しで管理パネル
+  // マウス操作端末向け: 画面左下の領域を3秒間長押しすると管理パネルを表示
   const hot = $('#hot');
   hot.addEventListener('pointerdown', () => { clearTimeout(holdTimer); holdTimer = setTimeout(openAdmin, 3000); });
   for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) hot.addEventListener(ev, () => clearTimeout(holdTimer));
 
-  // カーソルを止めて3秒で隠す
+  // カーソル停止後3秒で非表示化
   let cursorTimer = null;
   addEventListener('pointermove', () => {
     document.body.classList.remove('hide-cursor');
@@ -560,12 +560,12 @@
   addEventListener('contextmenu', (e) => e.preventDefault());
   addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
 
-  // ---------- 管理パネル ----------
+  // 管理パネル制御
   let adminTimer = null;
   function openAdmin() {
     clearTimeout(holdTimer);
     held.clear();
-    // 途中の回答はスタッフ操作なので記録せず捨てる
+    // スタッフ操作開始時の回答中データは破棄し、記録しない
     if (S.screen === 'question') resetSession();
     $('#admin').hidden = false;
     renderAdmin();
@@ -578,18 +578,18 @@
   }
   function renderAdmin() {
     if ($('#admin').hidden) return;
-    const label = { unset: '未設定', ok: 'OK', denied: '拒否', unknown: '未確認' }[S.tokenState];
+    const label = { unset: '未設定', ok: '正常', denied: '認証エラー', unknown: '未確認' }[S.tokenState];
     const info = [
       ['トークン', label + (MOCK ? ' (mock)' : '')],
-      ['未送信', outbox.length + ' 件'],
-      ['ローカル', responses.length + ' 件'],
+      ['未送信キュー', outbox.length + ' 件'],
+      ['ローカル保存', responses.length + ' 件'],
       ['最終同期', S.lastSync || '-'],
       ['端末名', S.device],
-      ['版', C.appVersion],
+      ['バージョン', C.appVersion],
     ];
     $('#admin-info').innerHTML = info.map(([k, v]) => `<dt>${k}</dt><dd>${String(v).replace(/</g, '&lt;')}</dd>`).join('');
     $('[data-a="test"]').textContent = 'テストモード: ' + (S.test ? 'ON' : 'OFF');
-    $('[data-a="mute"]').textContent = '音: ' + (S.mute ? 'OFF' : 'ON');
+    $('[data-a="mute"]').textContent = '効果音: ' + (S.mute ? 'OFF' : 'ON');
   }
 
   const COLS = ['id', 'seq', 'status', 'is_test', 'party_size', 'attribute', 'with_kids', 'started_at', 'answered_at', 'duration_ms', 'q_ms', 'input', 'device', 'app_version'];
@@ -615,10 +615,10 @@
     } else if (a === 'json') {
       download(`fest-${S.device}-${stamp()}.json`, JSON.stringify({ responses, outbox }, null, 1), 'application/json');
     } else if (a === 'device') {
-      const v = prompt('端末名', S.device);
+      const v = prompt('端末名を入力してください', S.device);
       if (v) { S.device = v.trim(); LS.set('device', S.device); }
     } else if (a === 'token') {
-      if (confirm('この端末のトークンを消去しますか？ (未送信データは残ります)')) {
+      if (confirm('この端末に保存されているトークンを消去しますか？\n(※端末内の未送信データは保持されます)')) {
         LS.del('token');
         S.token = null;
         closeAdmin();
@@ -628,9 +628,9 @@
     renderAdmin();
   });
 
-  // ---------- 起動 ----------
+  // 初期化・自動実行
   async function wake() {
-    try { if (navigator.wakeLock && document.visibilityState === 'visible') await navigator.wakeLock.request('screen'); } catch { /* 非対応 */ }
+    try { if (navigator.wakeLock && document.visibilityState === 'visible') await navigator.wakeLock.request('screen'); } catch { /* Screen Wake Lock API 非対応環境 */ }
   }
   document.addEventListener('visibilitychange', wake);
   wake();
