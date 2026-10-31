@@ -324,7 +324,6 @@
     S.qEnter = performance.now();
 
     $('#dots').innerHTML = qs.map((_, i) => `<i class="${i < S.qi ? 'done' : i === S.qi ? 'now' : ''}"></i>`).join('');
-    $('#hint').textContent = q.hint || '';
     $('#backbtn').classList.toggle('off', S.qi === 0);
     $('#backbtn').classList.remove('cur');
     $('#prompt').innerHTML = q.prompt;

@@ -68,7 +68,6 @@ window.CONFIG = {
     {
       id: "party_size",
       prompt: "何名様でお越しですか？",
-      hint: "1グループにつき1回、代表者の方がご回答ください",
       options: [
         { value: 1, label: "1人", icon: persons(1) },
         { value: 2, label: "2人", icon: persons(2) },
@@ -80,7 +79,6 @@ window.CONFIG = {
     {
       id: "attribute",
       prompt: "当てはまる区分をお選びください",
-      hint: "複数当てはまる場合は、より左側の項目をお選びください",
       options: [
         {
           value: "student",
@@ -131,7 +129,6 @@ window.CONFIG = {
     {
       id: "with_kids",
       prompt: "小学生以下の<wbr>お子さまと<wbr>ご一緒ですか？",
-      hint: "",
       skipIf: (a) => a.party_size === 1,
       options: [
         {

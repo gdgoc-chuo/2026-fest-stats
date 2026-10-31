@@ -43,7 +43,7 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   gap: 3vh;
 }
 .top { display: flex; align-items: center; gap: 2vw; min-height: 2.4vh; }
-/* 左上の「戻る」ボタンと離し、進み具合と注意書きは右に寄せる */
+/* 左上の「戻る」ボタンと離し、進み具合は右に寄せる */
 .dots { display: flex; align-items: center; gap: 10px; margin-left: auto; }
 .dots i { width: 14px; height: 14px; background: var(--line); display: block; }
 .dots i:nth-child(4n+1) { --c: var(--blue); }
@@ -52,7 +52,6 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 .dots i:nth-child(4n+4) { --c: var(--green); }
 .dots i.done { background: var(--c); }
 .dots i.now { background: var(--c); width: 20px; height: 20px; }
-.hint { font-size: clamp(16px, 1.6vw, 28px); color: var(--muted); text-align: right; }
 
 /* 回答中に1つ前の設問へ戻るボタン。最初の設問では場所だけ残して隠す */
 .backbtn {
