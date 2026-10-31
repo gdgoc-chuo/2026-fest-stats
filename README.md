@@ -3,7 +3,8 @@
 学園祭の受付で来場者が回答するキオスク型アンケートシステム。
 カメラに手をかざす操作 (手の骨格認識)、マウス操作、または4キー (←・→・決定・戻る) のどれか1つだけで直感的に操作できる。
 
-公開URL: https://gdgoc-chuo.github.io/2026-fest-stats/
+- 公開URL: https://gdgoc-chuo.github.io/2026-fest-stats/
+- 動作確認用 (GAS と通信しないモック): https://gdgoc-chuo.github.io/2026-fest-stats/?mock
 
 ## 目次
 
