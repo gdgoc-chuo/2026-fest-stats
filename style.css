@@ -161,7 +161,8 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 .bars .me .fl { background: var(--accent); }
 @keyframes grow { from { transform: scaleX(0); } }
 
-.timer { position: absolute; left: 0; bottom: 0; height: 6px; width: 100%; background: var(--ink); transform-origin: left; }
+/* 最初の画面に戻るまでの残り時間。左端から削れて右へ縮む */
+.timer { position: absolute; left: 0; bottom: 0; height: 6px; width: 100%; background: var(--ink); transform-origin: right; }
 .timer.run { animation: shrink var(--dur, 8s) linear forwards; }
 @keyframes shrink { to { transform: scaleX(0); } }
 
