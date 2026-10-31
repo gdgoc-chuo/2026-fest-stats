@@ -359,7 +359,8 @@
     sfx.move(S.cursor);
   }
 
-  function pick(i) {
+  // at: 選んだ瞬間のポインタ・手の座標。散らす起点にする (キー操作ではタイルの中央)
+  function pick(i, at) {
     if (S.busy) return;
     const q = activeQs()[S.qi];
     const o = q.options[i];
@@ -375,7 +376,7 @@
     renderCursor();
     el.classList.add('chosen');
     const b = el.getBoundingClientRect();
-    burst(b.left + b.width / 2, b.top + b.height / 2, 24, 0.9);
+    burst(at ? at.x : b.left + b.width / 2, at ? at.y : b.top + b.height / 2, 24, 0.9);
     sfx.pick(i);
 
     S.busy = true;
@@ -574,7 +575,7 @@
     const el = e.target.closest('.opt');
     if (!el || S.swallowClick) return;
     S.inputs.add('mouse');
-    pick(Number(el.dataset.i));
+    pick(Number(el.dataset.i), e.detail ? { x: e.clientX, y: e.clientY } : null);
   });
   $('#options').addEventListener('pointerover', (e) => {
     const el = e.target.closest('.opt');
@@ -655,7 +656,7 @@
     const go = () => {
       S.inputs.add('hand');
       if (idx === 'back') back();
-      else pick(idx);
+      else pick(idx, h);
     };
 
     const now = performance.now();
