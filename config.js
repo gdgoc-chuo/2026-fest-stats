@@ -1,0 +1,125 @@
+// 当日はこのファイルだけ触れば済むようにする。
+// 属性コードは gas/Code.gs の ATTRS と揃えること。
+
+const svg = (inner) =>
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${inner}</svg>`;
+
+const PERSON =
+  '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c0-4.5 3-7.5 7-7.5s7 3 7 7.5"/>';
+
+// 人数アイコン: 人型を n 個並べる (plus=true で末尾に +)
+const persons = (n, plus) => {
+  const w = 14 * n + (plus ? 14 : 0);
+  let s = "";
+  for (let i = 0; i < n; i++)
+    s += `<g transform="translate(${i * 14 - 1} 0) scale(.62)">${PERSON}</g>`;
+  if (plus)
+    s += `<path transform="translate(${n * 14 - 2} 0)" d="M4 8h7M7.5 4.5v7" stroke-width="1.6"/>`;
+  return `<svg viewBox="0 0 ${w} 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${s}</svg>`;
+};
+
+window.CONFIG = {
+  // GAS ウェブアプリの URL (デプロイ後に貼る)
+  GAS_URL:
+    "https://script.google.com/macros/s/AKfycbxL4fiT5wXCz-fned7VieQJmHHGWwqG6sP9zwKkEuSdidbeFPpKd-CPdfh4DWsWqXQ/exec",
+
+  appVersion: "2026-fest-1",
+
+  // キー割り当て (KeyboardEvent.code)。カスタムキーボードに合わせて変更
+  keys: {
+    left: "ArrowLeft",
+    right: "ArrowRight",
+    ok: "Enter",
+    back: "Backspace",
+  },
+
+  idleWarnSec: 20, // 回答途中でこの秒数操作がなければ警告
+  idleCountdownSec: 10, // 警告からリセットまでの秒数
+  resultSec: 8, // 結果画面の表示秒数
+  milestoneEvery: 50, // N 組ごとにキリ番演出
+  milestoneText: "受付でお菓子をどうぞ",
+
+  questions: [
+    {
+      id: "party_size",
+      prompt: "ご一緒の人数は？",
+      hint: "1グループにつき1回、代表の方がお答えください",
+      options: [
+        { value: 1, label: "1人", icon: persons(1) },
+        { value: 2, label: "2人", icon: persons(2) },
+        { value: 3, label: "3人", icon: persons(3) },
+        { value: 4, label: "4人", icon: persons(4) },
+        { value: 5, label: "5人以上", icon: persons(4, true) },
+      ],
+    },
+    {
+      id: "attribute",
+      prompt: "あなたは？",
+      hint: "当てはまるうち、左のものを選んでください",
+      options: [
+        {
+          value: "student",
+          label: "在学生",
+          short: "在学生",
+          icon: svg(
+            '<path d="M4 5h7a1 1 0 0 1 1 1v13a2 2 0 0 0-2-2H4z M20 5h-7a1 1 0 0 0-1 1v13a2 2 0 0 1 2-2h6z"/>',
+          ),
+        },
+        {
+          value: "applicant",
+          label: "受験生・<wbr>高校生以下",
+          short: "受験生・高校生以下",
+          icon: svg('<path d="M4 20l1-4L16 5l3 3L8 19z M14 7l3 3"/>'),
+        },
+        {
+          value: "alumni",
+          label: "卒業生",
+          short: "卒業生",
+          icon: svg(
+            '<path d="M2 9l10-5 10 5-10 5z M6 11.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-4.5"/>',
+          ),
+        },
+        {
+          value: "other_univ",
+          label: "他大学生",
+          short: "他大学生",
+          icon: svg(
+            '<rect x="3" y="3" width="12" height="12"/><rect x="9" y="9" width="12" height="12"/>',
+          ),
+        },
+        {
+          value: "family_friend",
+          label: "在学生の<wbr>家族・友人",
+          short: "在学生の家族・友人",
+          icon: svg(
+            '<circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 20c0-3.5 2.7-6 6-6s6 2.5 6 6 M10 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/>',
+          ),
+        },
+        {
+          value: "general",
+          label: "その他<wbr>一般",
+          short: "その他一般",
+          icon: svg(
+            '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/>',
+          ),
+        },
+      ],
+    },
+    {
+      id: "with_kids",
+      prompt: "小学生以下の<wbr>お子さまと<wbr>ご一緒？",
+      hint: "",
+      skipIf: (a) => a.party_size === 1,
+      options: [
+        {
+          value: "yes",
+          label: "はい",
+          icon: svg(
+            '<circle cx="9" cy="7" r="3.5"/><path d="M2 21c0-4.5 3-7.5 7-7.5s7 3 7 7.5"/><circle cx="19" cy="13" r="2"/><path d="M16 21c0-2.4 1.3-4 3-4s3 1.6 3 4"/>',
+          ),
+        },
+        { value: "no", label: "いいえ", icon: svg(PERSON) },
+      ],
+    },
+  ],
+};
