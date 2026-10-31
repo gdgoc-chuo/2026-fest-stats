@@ -32,8 +32,11 @@ const clamp = (v, max) => Math.min(max, Math.max(0, v));
 
 // カメラ座標 (0〜1) から画面座標へ。映像は左右反転して来場者の視点と一致させる
 // リング・骨格・映像のすべてをこの対応で描き、指先とリングの位置をそろえる
-const toScreenX = (x) => ((1 - x - C.xRange[0]) / (C.xRange[1] - C.xRange[0])) * innerWidth;
-const toScreenY = (y) => ((y - C.yRange[0]) / (C.yRange[1] - C.yRange[0])) * innerHeight;
+// 縦も横と同じ縮尺にして、映像や手の形が横に引き伸ばされないようにする (縦の範囲は xRange と画面・映像の縦横比から決まる)
+const pxPerX = () => innerWidth / (C.xRange[1] - C.xRange[0]);
+const camAspect = () => (video && video.videoWidth ? video.videoWidth / video.videoHeight : 4 / 3);
+const toScreenX = (x) => (1 - x - C.xRange[0]) * pxPerX();
+const toScreenY = (y) => ((y - C.yCenter) * pxPerX()) / camAspect() + innerHeight / 2;
 
 async function createLandmarker() {
   const files = await FilesetResolver.forVisionTasks(WASM);
