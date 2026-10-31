@@ -184,8 +184,8 @@ function draw(lm) {
     g.lineTo(bx, by);
   }
   g.stroke();
-  // 指先マーカー描画: 親指は青、人差し指は赤
-  for (const [i, color] of [[4, '#4285f4'], [8, '#ea4335']]) {
+  // 指先マーカー描画: 親指は黄、人差し指は赤
+  for (const [i, color] of [[4, '#fbbc04'], [8, '#ea4335']]) {
     g.fillStyle = color;
     const [x, y] = P(lm[i]);
     g.beginPath();
