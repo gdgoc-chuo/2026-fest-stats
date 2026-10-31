@@ -24,7 +24,6 @@
 
 ```text
 2026-fest-stats
-├── .agent/
 ├── .gitignore
 ├── README.md
 ├── index.html
