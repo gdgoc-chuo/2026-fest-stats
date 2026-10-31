@@ -8,14 +8,17 @@ const PERSON =
   '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c0-4.5 3-7.5 7-7.5s7 3 7 7.5"/>';
 
 // 人数アイコン生成: 人型ピクトグラムを n 個配置 (plus=true の場合は末尾に「+」を付加)
+// 4個以上は横に長くなりすぎるため2段に分けて並べる
 const persons = (n, plus) => {
-  const w = 14 * n + (plus ? 14 : 0);
+  const rows = n >= 4 ? 2 : 1;
+  const cols = Math.ceil((n + (plus ? 1 : 0)) / rows);
+  const at = (k) => `translate(${(k % cols) * 14} ${Math.floor(k / cols) * 15})`;
   let s = "";
   for (let i = 0; i < n; i++)
-    s += `<g transform="translate(${i * 14 - 1} 0) scale(.62)">${PERSON}</g>`;
+    s += `<g transform="${at(i)} translate(-1 0) scale(.62)">${PERSON}</g>`;
   if (plus)
-    s += `<path transform="translate(${n * 14 - 2} 0)" d="M4 8h7M7.5 4.5v7" stroke-width="1.6"/>`;
-  return `<svg viewBox="0 0 ${w} 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${s}</svg>`;
+    s += `<path transform="${at(n)} translate(-2 0)" d="M4 8h7M7.5 4.5v7" stroke-width="1.6"/>`;
+  return `<svg class="rows${rows}" viewBox="0 0 ${14 * cols} ${15 * rows - 1}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${s}</svg>`;
 };
 
 window.CONFIG = {
@@ -69,7 +72,7 @@ window.CONFIG = {
         { value: 2, label: "2人", icon: persons(2) },
         { value: 3, label: "3人", icon: persons(3) },
         { value: 4, label: "4人", icon: persons(4) },
-        { value: 5, label: "5人以上", icon: persons(4, true) },
+        { value: 5, label: "5人以上", icon: persons(5, true) },
       ],
     },
     {

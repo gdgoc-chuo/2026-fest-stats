@@ -83,6 +83,8 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   transition: background-color .08s, border-color .08s, color .08s, transform .12s;
 }
 .opt svg { height: clamp(48px, 10vh, 140px); width: auto; max-width: 90%; }
+/* 2段の人数アイコンは、1人あたりの大きさが1段のものとそろう高さにする */
+.opt svg.rows2 { height: clamp(96px, 20vh, 280px); }
 .opt span {
   font-size: clamp(20px, 2.5vw, 46px);
   font-weight: 700;
