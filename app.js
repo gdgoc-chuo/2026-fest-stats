@@ -314,6 +314,8 @@
 
     $('#dots').innerHTML = qs.map((_, i) => `<i class="${i < S.qi ? 'done' : i === S.qi ? 'now' : ''}"></i>`).join('');
     $('#hint').textContent = q.hint || '';
+    $('#backbtn').classList.toggle('off', S.qi === 0);
+    $('#backbtn').classList.remove('cur');
     $('#prompt').innerHTML = q.prompt;
 
     const box = $('#options');
@@ -577,6 +579,11 @@
     const i = Number(el.dataset.i);
     if (i !== S.cursor) { S.cursor = i; renderCursor(); sfx.move(i); }
   });
+  $('#backbtn').addEventListener('click', () => {
+    if (S.swallowClick) return;
+    S.inputs.add('mouse');
+    back();
+  });
   $('#s-result').addEventListener('click', () => {
     if (!S.swallowClick) input('ok');
   });
@@ -599,8 +606,16 @@
     });
     return best;
   }
+  // 「戻る」ボタンは選択肢の列の外 (左上) にあるため、手の位置がボタンの周囲に入ったときだけ対象にする
+  const backBtn = $('#backbtn');
+  function overBack(x, y) {
+    if (backBtn.classList.contains('off')) return false;
+    const r = backBtn.getBoundingClientRect();
+    return x > r.left - 40 && x < r.right + 40 && y > r.top - 40 && y < r.bottom + 40;
+  }
   function setDwell(idx, p) {
     document.querySelectorAll('#options .opt').forEach((el, i) => el.style.setProperty('--dwell', i === idx ? p : 0));
+    backBtn.style.setProperty('--dwell', idx === 'back' ? p : 0);
   }
 
   function onHand(h) {
@@ -611,6 +626,7 @@
       lastTouchX = null;
       DW.idx = -1;
       if (S.screen === 'question') setDwell(-1, 0);
+      backBtn.classList.remove('cur');
       return;
     }
     ptr.style.transform = `translate(${h.x}px, ${h.y}px)`;
@@ -629,16 +645,21 @@
       return;
     }
     if (S.busy) return;
-    const idx = optionAtX(h.x);
-    if (idx < 0) return;
-    if (idx !== S.cursor) { S.cursor = idx; renderCursor(); sfx.move(idx); }
+    const idx = overBack(h.x, h.y) ? 'back' : optionAtX(h.x);
+    if (idx === -1) return;
+    backBtn.classList.toggle('cur', idx === 'back');
+    if (idx !== 'back' && idx !== S.cursor) { S.cursor = idx; renderCursor(); sfx.move(idx); }
+    const go = () => {
+      S.inputs.add('hand');
+      if (idx === 'back') back();
+      else pick(idx);
+    };
 
     const now = performance.now();
     if (S.hand.select === 'pinch') {
       if (rising && now - lastHandPick > 500) {
         lastHandPick = now;
-        S.inputs.add('hand');
-        pick(idx);
+        go();
       }
       return;
     }
@@ -649,8 +670,7 @@
     if (p >= 1) {
       DW.until = now + C.hand.cooldownMs;
       DW.idx = -1;
-      S.inputs.add('hand');
-      pick(idx);
+      go();
     }
   }
 

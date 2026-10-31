@@ -53,6 +53,28 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 .dots i.now { background: var(--c); width: 20px; height: 20px; }
 .hint { font-size: clamp(16px, 1.6vw, 28px); color: var(--muted); }
 
+/* 回答中に1つ前の設問へ戻るボタン。最初の設問では場所だけ残して隠す */
+.backbtn {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; gap: .3em;
+  padding: .45em 1em .45em .6em;
+  background: var(--paper); color: var(--ink);
+  border: 3px solid var(--line); border-radius: 2px;
+  font: 700 clamp(16px, 1.6vw, 28px) var(--font);
+  cursor: pointer;
+  transition: background-color .08s, border-color .08s, color .08s;
+}
+.backbtn svg { width: 1.1em; height: 1.1em; }
+.backbtn.off { visibility: hidden; }
+.backbtn.cur, .backbtn:hover { background: var(--blue-strong); border-color: var(--blue-strong); color: var(--paper); }
+.backbtn::after {
+  content: "";
+  position: absolute; left: 0; bottom: 0;
+  width: 100%; height: 6px;
+  background: var(--yellow);
+  transform: scaleX(var(--dwell, 0)); transform-origin: left;
+}
+
 .prompt {
   font-size: clamp(36px, 5.2vw, 96px);
   font-weight: 700;

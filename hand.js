@@ -156,7 +156,7 @@ function draw(lm) {
     g.drawImage(video, 0, 0, w, h);
     g.restore();
     // 映像の上に選択肢の輪郭を描き、映像越しでも選択肢の位置が分かるようにする
-    for (const el of document.querySelectorAll('#options .opt')) {
+    for (const el of document.querySelectorAll('#options .opt, #backbtn:not(.off)')) {
       const r = el.getBoundingClientRect();
       if (!r.width) continue;
       const cur = el.classList.contains('cur');
