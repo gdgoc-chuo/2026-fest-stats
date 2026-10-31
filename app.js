@@ -158,12 +158,14 @@
     ctx.clearRect(0, 0, fx.width, fx.height);
     parts = parts.filter((p) => p.life > 0);
     for (const p of parts) {
-      p.vy += 0.45;
-      p.vx *= 0.985;
+      // 重力を弱め空気抵抗をかけ、ふわっと舞って長く見えるようにする
+      p.vy += 0.16;
+      p.vx *= 0.97;
+      p.vy *= 0.97;
       p.x += p.vx;
       p.y += p.vy;
       p.r += p.vr;
-      p.life -= 0.012;
+      p.life -= 0.007;
       ctx.save();
       ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 2));
       ctx.translate(p.x * d, p.y * d);
@@ -373,7 +375,7 @@
     renderCursor();
     el.classList.add('chosen');
     const b = el.getBoundingClientRect();
-    burst(b.left + b.width / 2, b.top + b.height / 2, 10, 0.5);
+    burst(b.left + b.width / 2, b.top + b.height / 2, 24, 0.9);
     sfx.pick(i);
 
     S.busy = true;
