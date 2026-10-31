@@ -23,6 +23,9 @@
     history.replaceState(null, '', location.pathname + location.search);
   }
 
+  // 開きっぱなしのタブに #setup=… を貼られた場合 (ハッシュ変更だけではページが再読込されない)
+  addEventListener('hashchange', () => { if (/^#setup=/.test(location.hash)) location.reload(); });
+
   const S = {
     screen: null,
     qi: 0,
