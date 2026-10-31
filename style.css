@@ -167,6 +167,16 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 #ldot { position: fixed; left: 28px; bottom: 10px; width: 10px; height: 10px; border: 2px solid var(--accent); z-index: 30; }
 #dot.test::after { content: "TEST"; position: absolute; left: 16px; bottom: -3px; font: 700 12px var(--font); color: var(--accent); }
 #hot { position: fixed; left: 0; bottom: 0; width: 56px; height: 56px; z-index: 31; }
+#holdbar {
+  position: fixed; left: 0; bottom: 0;
+  width: 240px; height: 8px;
+  background: var(--accent);
+  transform: scaleX(0); transform-origin: left;
+  pointer-events: none;
+  z-index: 32;
+}
+#holdbar.run { animation: hold var(--hold, 3s) linear forwards; }
+@keyframes hold { to { transform: scaleX(1); } }
 
 /* 管理パネル */
 #admin {
@@ -197,4 +207,5 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
   .timer.run { animation-duration: var(--dur, 8s) !important; }
+  #holdbar.run { animation-duration: var(--hold, 3s) !important; }
 }

@@ -483,6 +483,22 @@
   const held = new Set();
   let holdTimer = null;
 
+  // 管理パネルを開く長押し。押しているあいだ左下にバーを伸ばして進み具合を見せる
+  const HOLD_MS = 3000;
+  function startHold() {
+    clearTimeout(holdTimer);
+    const bar = $('#holdbar');
+    bar.style.setProperty('--hold', HOLD_MS + 'ms');
+    bar.classList.remove('run');
+    void bar.offsetWidth;
+    bar.classList.add('run');
+    holdTimer = setTimeout(openAdmin, HOLD_MS);
+  }
+  function cancelHold() {
+    clearTimeout(holdTimer);
+    $('#holdbar').classList.remove('run');
+  }
+
   addEventListener('keydown', (e) => {
     if (!$('#admin').hidden) { if (e.code === 'Escape') closeAdmin(); return; }
     if (e.ctrlKey && e.shiftKey && e.code === 'KeyA') { e.preventDefault(); openAdmin(); return; }
@@ -493,8 +509,7 @@
     held.add(act);
     // 「戻る」＋「決定」キーの3秒間長押しで管理パネルを表示
     if (held.has('ok') && held.has('back')) {
-      clearTimeout(holdTimer);
-      holdTimer = setTimeout(openAdmin, 3000);
+      startHold();
       return;
     }
     if (touch()) return;
@@ -504,9 +519,9 @@
   addEventListener('keyup', (e) => {
     const act = actionOf(e.code);
     if (act) held.delete(act);
-    clearTimeout(holdTimer);
+    cancelHold();
   });
-  addEventListener('blur', () => { held.clear(); clearTimeout(holdTimer); });
+  addEventListener('blur', () => { held.clear(); cancelHold(); });
 
   function input(act) {
     if (S.screen === 'question') {
@@ -547,8 +562,8 @@
 
   // マウス操作端末向け: 画面左下の領域を3秒間長押しすると管理パネルを表示
   const hot = $('#hot');
-  hot.addEventListener('pointerdown', () => { clearTimeout(holdTimer); holdTimer = setTimeout(openAdmin, 3000); });
-  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) hot.addEventListener(ev, () => clearTimeout(holdTimer));
+  hot.addEventListener('pointerdown', startHold);
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) hot.addEventListener(ev, cancelHold);
 
   // カーソル停止後3秒で非表示化
   let cursorTimer = null;
@@ -564,7 +579,7 @@
   // 管理パネル制御
   let adminTimer = null;
   function openAdmin() {
-    clearTimeout(holdTimer);
+    cancelHold();
     held.clear();
     // スタッフ操作開始時の回答中データは破棄し、記録しない
     if (S.screen === 'question') resetSession();
