@@ -102,7 +102,6 @@
     pick: (i) => { tone(SCALE[i % SCALE.length], 0, 0.16); tone(SCALE[i % SCALE.length] * 1.5, 0.02, 0.18, 'sine', 0.08); },
     back: () => tone(392, 0, 0.1, 'sine', 0.1),
     done: () => [0, 2, 4, 5].forEach((n, k) => tone(SCALE[n], k * 0.07, 0.3)),
-    milestone: () => [0, 2, 4, 5, 4, 5].forEach((n, k) => tone(SCALE[n] * (k > 3 ? 2 : 1), k * 0.09, 0.4, 'square', 0.07)),
     tick: () => tone(330, 0, 0.06, 'sine', 0.06),
   };
 
@@ -417,13 +416,9 @@
     S.resultAt = Date.now();
     const st = currentStats();
     const n = st.groups;
-    const milestone = !row.is_test && n > 0 && n % C.milestoneEvery === 0;
 
     $('#res-n').innerHTML = `<span class="pre">本日</span>${n.toLocaleString()}<small>組目</small>`;
     $('#res-sub').innerHTML = `これまでの総来場者数 <b>${st.people.toLocaleString()}</b> 人`;
-    const ms = $('#res-milestone');
-    ms.hidden = !milestone;
-    ms.textContent = milestone ? C.milestoneText : '';
 
     const attrQ = C.questions.find((q) => q.id === 'attribute');
     const pct = (v) => (st.groups ? Math.round(((st.attr[v] || 0) / st.groups) * 100) : 0);
@@ -440,7 +435,7 @@
         + `<span class="v${me}">${pct(o.value)}%</span>`;
     }).join('');
 
-    const sec = C.resultSec + (milestone ? 6 : 0);
+    const sec = C.resultSec;
     const t = $('#res-timer');
     t.classList.remove('run');
     t.style.setProperty('--dur', sec + 's');
@@ -448,13 +443,8 @@
     t.classList.add('run');
     S.resultTimer = setTimeout(resetSession, sec * 1000);
 
-    if (milestone) {
-      sfx.milestone();
-      for (let k = 0; k < 4; k++) setTimeout(() => burst(innerWidth * (0.2 + 0.2 * k), innerHeight * 0.5, 40, 1.2), k * 180);
-    } else {
-      sfx.done();
-      burst(innerWidth * 0.25, innerHeight * 0.45, 36, 1);
-    }
+    sfx.done();
+    burst(innerWidth * 0.25, innerHeight * 0.45, 36, 1);
   }
 
   // 無操作時の自動リセット

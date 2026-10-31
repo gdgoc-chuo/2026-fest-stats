@@ -175,15 +175,6 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 .big .pre { display: block; font-size: .16em; letter-spacing: 0; color: var(--muted); margin-bottom: .3em; }
 .res-sub { margin-top: 3vh; font-size: clamp(20px, 2vw, 36px); color: var(--muted); }
 .res-sub b { color: var(--ink); }
-.milestone {
-  margin-top: 4vh;
-  display: inline-block;
-  padding: 1.4vh 1.6vw;
-  background: var(--yellow);
-  color: var(--ink);
-  font-size: clamp(22px, 2.4vw, 44px);
-  font-weight: 700;
-}
 .res-lead { font-size: clamp(22px, 2.4vw, 44px); font-weight: 700; margin-bottom: 4vh; line-height: 1.4; }
 .res-lead b { font-size: 1.5em; font-variant-numeric: tabular-nums; color: var(--blue-strong); }
 
