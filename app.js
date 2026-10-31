@@ -118,20 +118,24 @@
   }
   resizeFx();
   addEventListener('resize', resizeFx);
+  // 図形に混ぜて飛ばすイラスト (5個に1個の割合で、GDG ロゴとサンドイッチを交互に)
+  const IMGS = ['assets/gdg.svg', 'assets/sandwich.png'].map((src) => Object.assign(new Image(), { src }));
   function burst(x, y, n, spread = 1) {
     if (REDUCED) n = Math.min(n, 6);
     const colors = ['#4285f4', '#ea4335', '#fbbc04', '#34a853'];
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2;
       const v = (4 + Math.random() * 10) * spread;
+      const img = i % 5 === 4 ? IMGS[((i - 4) / 5) % IMGS.length] : null;
       parts.push({
         x, y,
         vx: Math.cos(a) * v,
         vy: Math.sin(a) * v - 6 * spread,
         r: Math.random() * Math.PI,
-        vr: (Math.random() - 0.5) * 0.3,
-        s: 8 + Math.random() * 14,
+        vr: (Math.random() - 0.5) * (img ? 0.12 : 0.3),
+        s: img ? 56 + Math.random() * 24 : 8 + Math.random() * 14,
         k: i % 3,
+        img,
         c: colors[i % colors.length],
         life: 1,
       });
@@ -155,6 +159,16 @@
       ctx.rotate(p.r);
       ctx.fillStyle = p.c;
       const s = p.s * d;
+      if (p.img) {
+        const w = p.img.naturalWidth;
+        const h = p.img.naturalHeight;
+        if (w && h) {
+          const k = s / Math.max(w, h);
+          ctx.drawImage(p.img, (-w * k) / 2, (-h * k) / 2, w * k, h * k);
+        }
+        ctx.restore();
+        continue;
+      }
       ctx.beginPath();
       if (p.k === 0) ctx.arc(0, 0, s / 2, 0, Math.PI * 2);
       else if (p.k === 1) ctx.rect(-s / 2, -s / 2, s, s);

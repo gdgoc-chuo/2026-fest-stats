@@ -34,6 +34,9 @@
 ├── config.js       - 設問定義・キー割り当て・カメラ操作等の設定
 ├── kiosk.bat       - Edgeを全画面キオスクモードで起動するバッチスクリプト
 ├── style.css
+├── assets/         - 選択・回答完了時のエフェクトで飛ばすイラスト
+│   ├── gdg.svg      - GDG ロゴマーク (gdg.community.dev 掲載のロゴから記号部分を抽出)
+│   └── sandwich.png - サンドイッチ
 └── gas/
     └── Code.gs     - Google スプレッドシート連携用 Apps Script
 ```
