@@ -1,5 +1,5 @@
-// カメラで手の骨格を認識し、画面上の手の位置とつまみ状態を app.js に渡す
-// 映像はブラウザ内 (MediaPipe Hand Landmarker) で処理し、送信も保存もしない
+// カメラによる手の骨格認識。画面上の手の座標とピンチ状態を app.js へ伝達
+// 映像処理はブラウザ内 (MediaPipe Hand Landmarker) で完結し、外部送信や保存は行わない
 import { FilesetResolver, HandLandmarker } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/vision_bundle.mjs';
 
 const WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm';
@@ -67,17 +67,17 @@ async function start() {
   }
 }
 
-// カメラが使えないときは、有効になっている限り5秒ごとにつなぎ直す
+// カメラ接続不可時は、有効設定である限り5秒間隔で再接続を試行
 function retryLater() {
   if (FEST.settings().enabled) retryTimer = setTimeout(start, 5000);
 }
 
-// 映像が3秒以上進まなければ (カメラが抜けたなど) つなぎ直す
-// track の ended イベントは環境によって映像が流れていても発火するので使わない
+// 映像フレームが3秒以上更新されない場合 (カメラ切断等) は再接続を実行
+// track の ended イベントは環境によって映像受信中にも誤発火するため使用しない
 setInterval(() => {
   if (running && lastProgress && performance.now() - lastProgress > 3000) {
     stop();
-    FEST.handState('error', 'カメラの映像が止まった');
+    FEST.handState('error', 'カメラ映像が停止');
     retryLater();
   }
 }, 1000);
@@ -113,11 +113,11 @@ function track(lm) {
     FEST.hand({ present: false });
     return;
   }
-  // 位置は手のひらの中心で取る (つまむときに指先が動いても隣の選択肢に移らないように)
+  // 座標は手のひらの中心で算出 (ピンチ時の指先のブレによる隣接選択肢への誤移動を防止)
   const palm = [0, 5, 9, 13, 17].map((i) => lm[i]);
   const cx = palm.reduce((s, p) => s + p.x, 0) / palm.length;
   const cy = palm.reduce((s, p) => s + p.y, 0) / palm.length;
-  // カメラ映像は左右反転して、来場者から見た向きに合わせる
+  // カメラ映像を左右反転し、来場者の視点と一致させる
   const x = clamp01((1 - cx - C.xRange[0]) / (C.xRange[1] - C.xRange[0])) * innerWidth;
   const y = clamp01((cy - C.yRange[0]) / (C.yRange[1] - C.yRange[0])) * innerHeight;
   sx = sx === null ? x : sx + (x - sx) * C.smooth;
@@ -157,7 +157,7 @@ function draw(lm) {
     g.lineTo(bx, by);
   }
   g.stroke();
-  // 親指は青、人差し指は赤
+  // 指先マーカー描画: 親指は青、人差し指は赤
   for (const [i, color] of [[4, '#4285f4'], [8, '#ea4335']]) {
     g.fillStyle = color;
     const [x, y] = P(lm[i]);

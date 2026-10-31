@@ -709,7 +709,7 @@
     $('[data-a="mute"]').textContent = '効果音: ' + (S.mute ? 'OFF' : 'ON');
     $('[data-a="hand"]').textContent = 'カメラ: ' + (S.hand.enabled ? 'ON' : 'OFF');
     $('[data-a="handsel"]').textContent = '決定: ' + { pinch: 'つまむ', dwell: '手を止める' }[S.hand.select];
-    $('[data-a="handview"]').textContent = '映像: ' + { skeleton: '骨格だけ', mirror: '鏡', none: 'なし' }[S.hand.preview];
+    $('[data-a="handview"]').textContent = '映像: ' + { skeleton: '骨格', mirror: '鏡', none: 'なし' }[S.hand.preview];
   }
 
   const COLS = ['id', 'seq', 'status', 'is_test', 'party_size', 'attribute', 'with_kids', 'started_at', 'answered_at', 'duration_ms', 'q_ms', 'input', 'device', 'app_version'];
@@ -723,9 +723,9 @@
   const stamp = () => jst(new Date()).slice(0, 19).replace(/[-:]/g, '').replace('T', '-');
 
   // ローカル CSV (File System Access API)
-  // Edge のキオスクは InPrivate で localStorage が残らないため、選んだフォルダの responses.csv に1件ずつ追記して控えにする
+  // Edge のキオスクモードは InPrivate 動作で localStorage が保持されないため、指定フォルダの responses.csv に1件ずつ追記保存
   const FSA = typeof window.showDirectoryPicker === 'function';
-  const CSV_BOM = String.fromCharCode(0xfeff); // Excel で文字化けしないよう UTF-8 の BOM を付ける
+  const CSV_BOM = String.fromCharCode(0xfeff); // Excel での文字化けを防ぐため UTF-8 の BOM を付与
   const L = { handle: null, name: '', rows: 0, error: '', queue: Promise.resolve() };
   const csvEsc = (v) => (/[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : v);
   const csvLine = (r) => COLS.map((c) => csvEsc(r[c] ?? '')).join(',') + '\r\n';
@@ -743,17 +743,17 @@
   }
 
   function renderLocalState() {
-    // 保存先が未選択のあいだ、左下に朱色の四角を出してスタッフに知らせる
+    // 保存先未選択時は左下にインジケーター (四角) を表示してスタッフに通知
     $('#ldot').hidden = !FSA || !!L.handle;
   }
 
   async function pickLocalDir() {
-    if (!FSA) { L.error = 'このブラウザは非対応'; return; }
+    if (!FSA) { L.error = 'ブラウザ非対応'; return; }
     try {
       const dir = await window.showDirectoryPicker({ id: 'fest-stats', mode: 'readwrite' });
       const handle = await dir.getFileHandle('responses.csv', { create: true });
       const text = await (await handle.getFile()).text();
-      // 既にファイルにある回答は重複させず、無いものだけ足す
+      // ファイル内に既存の回答は重複書き込みせず、未追記の回答のみを追加
       const have = new Set(text.split(/\r?\n/).slice(1).filter(Boolean).map((l) => l.split(',')[0]));
       const missing = responses.filter((r) => !have.has(r.id));
       const out = (text.trim() ? '' : CSV_BOM + COLS.join(',') + '\r\n') + missing.map(csvLine).join('');
@@ -769,7 +769,7 @@
     renderAdmin();
   }
 
-  // 回答が確定するたびに呼ぶ。書き込みは順番に1件ずつ行う
+  // 回答確定時に実行。非同期キューにより順番に1件ずつ書き込み
   function saveLocal(row) {
     if (!L.handle) return;
     L.queue = L.queue.then(async () => {
@@ -812,7 +812,7 @@
     } else if (a === 'hand') {
       S.hand.enabled = !S.hand.enabled;
       LS.set('hand.enabled', S.hand.enabled);
-      if (!window.HAND) FEST.handState('error', 'hand.js を読み込めていない');
+      if (!window.HAND) FEST.handState('error', 'hand.js 未読み込み');
       else if (S.hand.enabled) window.HAND.start();
       else { window.HAND.stop(); FEST.handState('off'); }
     } else if (a === 'handsel') {
@@ -841,8 +841,8 @@
 
   renderLocalState();
   renderHandUi();
-  // hand.js は CDN の MediaPipe に依存する。読み込めないまま時間が経ったらエラーとして見せる
-  setTimeout(() => { if (S.hand.enabled && !window.HAND && S.handState !== 'error') FEST.handState('error', 'MediaPipe を読み込めない'); }, 20000);
+  // CDN からの MediaPipe 読み込みが一定時間完了しない場合はエラーを表示
+  setTimeout(() => { if (S.hand.enabled && !window.HAND && S.handState !== 'error') FEST.handState('error', 'MediaPipe の読み込みに失敗'); }, 20000);
   setTokenState(S.token ? 'unknown' : 'unset');
   checkStatus();
 })();

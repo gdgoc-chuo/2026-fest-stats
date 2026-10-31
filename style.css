@@ -4,14 +4,14 @@
   --muted: #5f6368;
   --line: #dadce0;
   --bar: #dadce0;
-  /* Google カラー */
+  /* Google ブランドカラー */
   --blue: #4285f4;
   --red: #ea4335;
   --yellow: #fbbc04;
   --green: #34a853;
-  --blue-strong: #1a73e8; /* 白文字を載せる面に使う (コントラスト 4.5:1 以上) */
+  --blue-strong: #1a73e8; /* 白抜き文字用の高コントラスト青 (コントラスト比 4.5:1 以上) */
   --google: linear-gradient(90deg, var(--blue) 0 25%, var(--red) 25% 50%, var(--yellow) 50% 75%, var(--green) 75% 100%);
-  /* 英数字は Google Sans、和文は Google が組み合わせて使う Noto Sans JP */
+  /* フォント指定: 英数字は Google Sans、日本語は Noto Sans JP */
   --font: "Google Sans", "Noto Sans JP", "BIZ UDPGothic", "Hiragino Sans", system-ui, sans-serif;
 }
 
@@ -106,7 +106,7 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 .handhint { font-size: clamp(16px, 1.6vw, 28px); font-weight: 700; }
 #handview { width: 160px; height: 120px; flex: none; border: 2px solid var(--line); border-radius: 2px; }
 
-/* カメラ操作: 手の位置を示すリング。つまんでいるあいだは塗りつぶす */
+/* カメラ操作: 手の位置を示すポインタリング。ピンチ中は塗りつぶし表示 */
 #handptr {
   position: fixed; left: 0; top: 0;
   width: 48px; height: 48px; margin: -24px 0 0 -24px;
@@ -116,7 +116,7 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 }
 #handptr.pinch { background: var(--blue); }
 
-/* カメラ操作 (手を止める): 決定までの進み具合をタイル下端のバーで見せる */
+/* カメラ操作 (手を止める): 滞留時間による決定進捗をタイル下端のバーで表示 */
 .opt { position: relative; overflow: hidden; }
 .opt::after {
   content: "";
@@ -172,7 +172,7 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 .bars .me .fl { background: var(--blue); }
 @keyframes grow { from { transform: scaleX(0); } }
 
-/* 最初の画面に戻るまでの残り時間。左端から削れて右へ縮む */
+/* 結果画面の表示タイマーバー。左から右へ縮退 */
 .timer { position: absolute; left: 0; bottom: 0; height: 8px; width: 100%; background: var(--google); }
 .timer.run { animation: shrink var(--dur, 8s) linear forwards; }
 @keyframes shrink { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(0 0 0 100%); } }
@@ -203,7 +203,7 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 #dot.test::after { content: "TEST"; position: absolute; left: 36px; bottom: -3px; white-space: nowrap; font: 700 12px var(--font); color: var(--red); }
 #hot { position: fixed; left: 0; bottom: 0; width: 56px; height: 56px; z-index: 31; }
 
-/* 管理パネルを開く長押し。画面幅いっぱいで 100% */
+/* 管理パネル起動用の長押しプログレスバー */
 #holdbar {
   position: fixed; left: 0; bottom: 0;
   width: 100%; height: 8px;
