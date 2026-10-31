@@ -120,7 +120,7 @@
   addEventListener('resize', resizeFx);
   function burst(x, y, n, spread = 1) {
     if (REDUCED) n = Math.min(n, 6);
-    const colors = ['#ff4a1c', '#ff4a1c', '#111', '#c4c4c4'];
+    const colors = ['#4285f4', '#ea4335', '#fbbc04', '#34a853'];
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2;
       const v = (4 + Math.random() * 10) * spread;
@@ -490,7 +490,7 @@
   const held = new Set();
   let holdTimer = null;
 
-  // 管理パネルを開く長押し。押しているあいだ左下にバーを伸ばして進み具合を見せる
+  // 管理パネルを開く長押し判定。押下中は画面左下にプログレスバーをアニメーション表示
   const HOLD_MS = 3000;
   function startHold() {
     clearTimeout(holdTimer);
@@ -567,14 +567,14 @@
     if (!S.swallowClick) input('ok');
   });
 
-  // カメラ (手の骨格認識) 入力。hand.js が毎フレーム呼ぶ
+  // カメラ (手の骨格認識) 入力。hand.js から毎フレーム呼び出されるハンドラ
   const ptr = $('#handptr');
   const DW = { idx: -1, since: 0, until: 0 };
   let lastPinch = false;
   let lastHandPick = 0;
   let lastTouchX = null;
 
-  // 選択肢は横一列なので、手の横位置に一番近い選択肢を指しているとみなす
+  // 選択肢は横一列配置のため、手のX座標に最も近い選択肢を選択対象と判定
   function optionAtX(x) {
     let best = -1;
     let bestD = Infinity;
@@ -604,7 +604,7 @@
     const rising = h.pinch && !lastPinch;
     lastPinch = h.pinch;
 
-    // 手を大きく動かしたか、つまんだときだけ操作とみなす (かざしたままの通行人で回答が始まりすぎないように)
+    // 一定以上の手の移動またはピンチ動作のみを操作と判定 (手をかざしただけの通行人による誤開始を防止)
     if (lastTouchX === null || Math.abs(h.x - lastTouchX) > 40 || rising) {
       lastTouchX = h.x;
       if (touch()) return;
@@ -628,7 +628,7 @@
       }
       return;
     }
-    // 手を止めて決定: 同じ選択肢に dwellMs 留まったら決定。決定直後は cooldownMs 待ってから数え直す
+    // 手を止めて決定 (dwell): 同一選択肢上に dwellMs 滞留で決定。決定後は cooldownMs 経過後に再判定を開始
     if (idx !== DW.idx) { DW.idx = idx; DW.since = Math.max(now, DW.until); }
     const p = Math.min(1, Math.max(0, (now - DW.since) / C.hand.dwellMs));
     setDwell(idx, p);
@@ -647,7 +647,7 @@
     if (!on) ptr.hidden = true;
   }
 
-  // hand.js (ES module) から使う窓口
+  // hand.js (ES module) との連携用インターフェース
   window.FEST = {
     settings: () => S.hand,
     hand: onHand,

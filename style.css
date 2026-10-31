@@ -1,10 +1,16 @@
 :root {
-  --ink: #111;
+  --ink: #202124;
   --paper: #fff;
-  --accent: #ff4a1c;
-  --muted: #666;
-  --line: #e4e4e4;
-  --bar: #c4c4c4;
+  --muted: #5f6368;
+  --line: #dadce0;
+  --bar: #dadce0;
+  /* Google カラー */
+  --blue: #4285f4;
+  --red: #ea4335;
+  --yellow: #fbbc04;
+  --green: #34a853;
+  --blue-strong: #1a73e8; /* 白文字を載せる面に使う (コントラスト 4.5:1 以上) */
+  --google: linear-gradient(90deg, var(--blue) 0 25%, var(--red) 25% 50%, var(--yellow) 50% 75%, var(--green) 75% 100%);
   /* 英数字は Google Sans、和文は Google が組み合わせて使う Noto Sans JP */
   --font: "Google Sans", "Noto Sans JP", "BIZ UDPGothic", "Hiragino Sans", system-ui, sans-serif;
 }
@@ -37,10 +43,14 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   gap: 3vh;
 }
 .top { display: flex; align-items: center; gap: 2vw; min-height: 2.4vh; }
-.dots { display: flex; gap: 10px; }
+.dots { display: flex; align-items: center; gap: 10px; }
 .dots i { width: 14px; height: 14px; background: var(--line); display: block; }
-.dots i.done { background: var(--ink); }
-.dots i.now { background: var(--accent); }
+.dots i:nth-child(4n+1) { --c: var(--blue); }
+.dots i:nth-child(4n+2) { --c: var(--red); }
+.dots i:nth-child(4n+3) { --c: var(--yellow); }
+.dots i:nth-child(4n+4) { --c: var(--green); }
+.dots i.done { background: var(--c); }
+.dots i.now { background: var(--c); width: 20px; height: 20px; }
 .hint { font-size: clamp(16px, 1.6vw, 28px); color: var(--muted); }
 
 .prompt {
@@ -66,11 +76,11 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   padding: 2vh 1vw;
   background: var(--paper);
   color: var(--ink);
-  border: 3px solid var(--ink);
+  border: 3px solid var(--line);
   border-radius: 2px;
   font: inherit;
   cursor: pointer;
-  transition: background-color .08s, color .08s, transform .12s;
+  transition: background-color .08s, border-color .08s, color .08s, transform .12s;
 }
 .opt svg { height: clamp(48px, 10vh, 140px); width: auto; max-width: 90%; }
 .opt span {
@@ -79,8 +89,8 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   line-height: 1.3;
   text-align: center;
 }
-.opt.cur { background: var(--ink); color: var(--paper); }
-.opt.chosen { background: var(--accent); border-color: var(--accent); color: var(--ink); transform: scale(.96); }
+.opt.cur { background: var(--blue-strong); border-color: var(--blue-strong); color: var(--paper); }
+.opt.chosen { background: var(--green); border-color: var(--green); color: var(--paper); transform: scale(.96); }
 
 .options.enter .opt { animation: rise .28s cubic-bezier(.2,.8,.2,1) both; }
 .options.enter .opt:nth-child(2) { animation-delay: .03s; }
@@ -92,18 +102,19 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 
 .bottom { display: flex; align-items: center; gap: 1.6vw; min-height: 1.4em; }
 .counter { font-size: clamp(16px, 1.6vw, 28px); color: var(--muted); text-align: right; margin-left: auto; }
+.counter b { color: var(--blue-strong); font-size: 1.6em; margin: 0 .15em; font-variant-numeric: tabular-nums; }
 .handhint { font-size: clamp(16px, 1.6vw, 28px); font-weight: 700; }
-#handview { width: 160px; height: 120px; flex: none; border: 2px solid var(--ink); border-radius: 2px; }
+#handview { width: 160px; height: 120px; flex: none; border: 2px solid var(--line); border-radius: 2px; }
 
 /* カメラ操作: 手の位置を示すリング。つまんでいるあいだは塗りつぶす */
 #handptr {
   position: fixed; left: 0; top: 0;
   width: 48px; height: 48px; margin: -24px 0 0 -24px;
-  border: 5px solid var(--accent); border-radius: 50%;
+  border: 5px solid var(--blue); border-radius: 50%;
   pointer-events: none;
   z-index: 26;
 }
-#handptr.pinch { background: var(--accent); }
+#handptr.pinch { background: var(--blue); }
 
 /* カメラ操作 (手を止める): 決定までの進み具合をタイル下端のバーで見せる */
 .opt { position: relative; overflow: hidden; }
@@ -111,10 +122,9 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   content: "";
   position: absolute; left: 0; bottom: 0;
   width: 100%; height: 10px;
-  background: var(--accent);
+  background: var(--yellow);
   transform: scaleX(var(--dwell, 0)); transform-origin: left;
 }
-.counter b { color: var(--ink); font-size: 1.6em; margin: 0 .15em; font-variant-numeric: tabular-nums; }
 
 /* 結果画面 */
 #s-result {
@@ -139,13 +149,13 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   margin-top: 4vh;
   display: inline-block;
   padding: 1.4vh 1.6vw;
-  background: var(--accent);
+  background: var(--yellow);
   color: var(--ink);
   font-size: clamp(22px, 2.4vw, 44px);
   font-weight: 700;
 }
 .res-lead { font-size: clamp(22px, 2.4vw, 44px); font-weight: 700; margin-bottom: 4vh; line-height: 1.4; }
-.res-lead b { font-size: 1.5em; font-variant-numeric: tabular-nums; }
+.res-lead b { font-size: 1.5em; font-variant-numeric: tabular-nums; color: var(--blue-strong); }
 
 .bars { display: grid; grid-template-columns: auto 1fr auto; gap: 1.6vh 1.4vw; align-items: center; }
 .bars .lb { font-size: clamp(16px, 1.6vw, 28px); color: var(--muted); white-space: nowrap; }
@@ -159,17 +169,17 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 }
 .bars .v { font-size: clamp(16px, 1.6vw, 28px); font-variant-numeric: tabular-nums; text-align: right; min-width: 3.5em; }
 .bars .me.lb, .bars .me.v { color: var(--ink); font-weight: 700; }
-.bars .me .fl { background: var(--accent); }
+.bars .me .fl { background: var(--blue); }
 @keyframes grow { from { transform: scaleX(0); } }
 
 /* 最初の画面に戻るまでの残り時間。左端から削れて右へ縮む */
-.timer { position: absolute; left: 0; bottom: 0; height: 6px; width: 100%; background: var(--ink); transform-origin: right; }
+.timer { position: absolute; left: 0; bottom: 0; height: 8px; width: 100%; background: var(--google); }
 .timer.run { animation: shrink var(--dur, 8s) linear forwards; }
-@keyframes shrink { to { transform: scaleX(0); } }
+@keyframes shrink { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(0 0 0 100%); } }
 
 /* トークン未設定画面 */
 #s-setup { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4vh; }
-#s-setup svg { width: 12vh; height: 12vh; }
+#s-setup svg { width: 12vh; height: 12vh; color: var(--muted); }
 #s-setup p { font-size: clamp(24px, 3vw, 56px); font-weight: 700; }
 
 /* 無操作時の警告表示 */
@@ -180,36 +190,37 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   gap: 2vh;
   z-index: 20;
 }
-.warn-n { font-size: clamp(120px, 24vw, 420px); font-weight: 700; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
+.warn-n { font-size: clamp(120px, 24vw, 420px); font-weight: 700; line-height: 1; color: var(--red); font-variant-numeric: tabular-nums; }
 #warn p { font-size: clamp(24px, 3vw, 56px); font-weight: 700; }
 #warn .warn-sub { font-size: clamp(18px, 2vw, 36px); font-weight: 400; color: var(--muted); }
 
 /* 演出エフェクト・ステータス表示 */
 #fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 #dot { position: fixed; left: 10px; bottom: 10px; width: 10px; height: 10px; border-radius: 50%; z-index: 30; }
-#dot.unknown { background: #999; }
-#dot.denied, #dot.unset { background: var(--accent); }
-#ldot { position: fixed; left: 28px; bottom: 10px; width: 10px; height: 10px; border: 2px solid var(--accent); z-index: 30; }
-#dot.test::after { content: "TEST"; position: absolute; left: 36px; bottom: -3px; white-space: nowrap; font: 700 12px var(--font); color: var(--accent); }
+#dot.unknown { background: #9aa0a6; }
+#dot.denied, #dot.unset { background: var(--red); }
+#ldot { position: fixed; left: 28px; bottom: 10px; width: 10px; height: 10px; background: var(--yellow); z-index: 30; }
+#dot.test::after { content: "TEST"; position: absolute; left: 36px; bottom: -3px; white-space: nowrap; font: 700 12px var(--font); color: var(--red); }
 #hot { position: fixed; left: 0; bottom: 0; width: 56px; height: 56px; z-index: 31; }
+
 /* 管理パネルを開く長押し。画面幅いっぱいで 100% */
 #holdbar {
   position: fixed; left: 0; bottom: 0;
   width: 100%; height: 8px;
-  background: var(--accent);
-  transform: scaleX(0); transform-origin: left;
+  background: var(--google);
+  clip-path: inset(0 100% 0 0);
   pointer-events: none;
   z-index: 32;
 }
 #holdbar.run { animation: hold var(--hold, 3s) linear forwards; }
-@keyframes hold { to { transform: scaleX(1); } }
+@keyframes hold { to { clip-path: inset(0 0 0 0); } }
 
 /* 管理パネル */
 #admin {
   position: fixed; top: 0; right: 0; bottom: 0;
   width: min(440px, 100%);
   background: var(--paper);
-  border-left: 3px solid var(--ink);
+  border-left: 4px solid var(--blue);
   padding: 24px;
   z-index: 40;
   overflow: auto;
@@ -224,11 +235,11 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   padding: 12px;
   background: var(--paper);
   color: var(--ink);
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 2px;
   cursor: pointer;
 }
-.admin-btns button:hover, .admin-btns button:focus-visible { background: var(--ink); color: var(--paper); outline: none; }
+.admin-btns button:hover, .admin-btns button:focus-visible { background: var(--blue-strong); border-color: var(--blue-strong); color: var(--paper); outline: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }

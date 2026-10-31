@@ -141,14 +141,14 @@ function draw(lm) {
     g.drawImage(video, 0, 0, W, H);
     g.restore();
   } else {
-    g.fillStyle = '#f2f2f2';
+    g.fillStyle = '#f1f3f4';
     g.fillRect(0, 0, W, H);
   }
   if (!lm) return;
   const P = (p) => [(1 - p.x) * W, p.y * H];
   g.lineWidth = 4;
   g.lineCap = 'round';
-  g.strokeStyle = mode === 'mirror' ? '#fff' : '#111';
+  g.strokeStyle = mode === 'mirror' ? '#fff' : '#202124';
   g.beginPath();
   for (const { start: a, end: b } of HandLandmarker.HAND_CONNECTIONS) {
     const [ax, ay] = P(lm[a]);
@@ -157,8 +157,9 @@ function draw(lm) {
     g.lineTo(bx, by);
   }
   g.stroke();
-  g.fillStyle = '#ff4a1c';
-  for (const i of [4, 8]) {
+  // 親指は青、人差し指は赤
+  for (const [i, color] of [[4, '#4285f4'], [8, '#ea4335']]) {
+    g.fillStyle = color;
     const [x, y] = P(lm[i]);
     g.beginPath();
     g.arc(x, y, pinched ? 10 : 6, 0, Math.PI * 2);
