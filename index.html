@@ -18,7 +18,11 @@
     </div>
     <div class="prompt" id="prompt" role="heading" aria-level="1"></div>
     <div class="options" id="options" role="listbox"></div>
-    <div class="counter" id="counter"></div>
+    <div class="bottom">
+      <canvas id="handview" aria-hidden="true" hidden></canvas>
+      <div class="handhint" id="handhint"></div>
+      <div class="counter" id="counter"></div>
+    </div>
   </section>
 
   <section id="s-result" class="screen" hidden>
@@ -50,6 +54,7 @@
   <div id="ldot" aria-hidden="true" hidden></div>
   <div id="hot" aria-hidden="true"></div>
   <div id="holdbar" aria-hidden="true"></div>
+  <div id="handptr" aria-hidden="true" hidden></div>
 
   <aside id="admin" hidden>
     <dl id="admin-info"></dl>
@@ -60,6 +65,9 @@
       <button data-a="dir">CSV保存先を選ぶ</button>
       <button data-a="csv">CSV</button>
       <button data-a="json">JSON</button>
+      <button data-a="hand"></button>
+      <button data-a="handsel"></button>
+      <button data-a="handview"></button>
       <button data-a="device">端末名</button>
       <button data-a="token">トークン消去</button>
       <button data-a="close">閉じる</button>
@@ -68,5 +76,6 @@
 </main>
 <script src="config.js"></script>
 <script src="app.js"></script>
+<script type="module" src="hand.js" onerror="FEST.handState('error', 'MediaPipe を読み込めない')"></script>
 </body>
 </html>

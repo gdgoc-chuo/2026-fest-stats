@@ -48,6 +48,13 @@
     test: LS.get('test', false),
     mute: LS.get('mute', false),
     device: LS.get('device', 'reception-1'),
+    hand: {
+      enabled: LS.get('hand.enabled', C.hand.enabled),
+      select: LS.get('hand.select', C.hand.select),
+      preview: LS.get('hand.preview', C.hand.preview),
+    },
+    handState: 'off', // off | loading | ok | error
+    handError: '',
   };
   LS.set('device', S.device);
 
@@ -560,6 +567,98 @@
     if (!S.swallowClick) input('ok');
   });
 
+  // カメラ (手の骨格認識) 入力。hand.js が毎フレーム呼ぶ
+  const ptr = $('#handptr');
+  const DW = { idx: -1, since: 0, until: 0 };
+  let lastPinch = false;
+  let lastHandPick = 0;
+  let lastTouchX = null;
+
+  // 選択肢は横一列なので、手の横位置に一番近い選択肢を指しているとみなす
+  function optionAtX(x) {
+    let best = -1;
+    let bestD = Infinity;
+    document.querySelectorAll('#options .opt').forEach((el, i) => {
+      const r = el.getBoundingClientRect();
+      const d = Math.abs(r.left + r.width / 2 - x);
+      if (d < bestD) { bestD = d; best = i; }
+    });
+    return best;
+  }
+  function setDwell(idx, p) {
+    document.querySelectorAll('#options .opt').forEach((el, i) => el.style.setProperty('--dwell', i === idx ? p : 0));
+  }
+
+  function onHand(h) {
+    const active = h.present && S.hand.enabled && $('#admin').hidden && (S.screen === 'question' || S.screen === 'result');
+    ptr.hidden = !active;
+    if (!active) {
+      lastPinch = false;
+      lastTouchX = null;
+      DW.idx = -1;
+      if (S.screen === 'question') setDwell(-1, 0);
+      return;
+    }
+    ptr.style.transform = `translate(${h.x}px, ${h.y}px)`;
+    ptr.classList.toggle('pinch', h.pinch);
+    const rising = h.pinch && !lastPinch;
+    lastPinch = h.pinch;
+
+    // 手を大きく動かしたか、つまんだときだけ操作とみなす (かざしたままの通行人で回答が始まりすぎないように)
+    if (lastTouchX === null || Math.abs(h.x - lastTouchX) > 40 || rising) {
+      lastTouchX = h.x;
+      if (touch()) return;
+    }
+
+    if (S.screen === 'result') {
+      if (rising && S.hand.select === 'pinch') { S.inputs.add('hand'); input('ok'); }
+      return;
+    }
+    if (S.busy) return;
+    const idx = optionAtX(h.x);
+    if (idx < 0) return;
+    if (idx !== S.cursor) { S.cursor = idx; renderCursor(); sfx.move(idx); }
+
+    const now = performance.now();
+    if (S.hand.select === 'pinch') {
+      if (rising && now - lastHandPick > 500) {
+        lastHandPick = now;
+        S.inputs.add('hand');
+        pick(idx);
+      }
+      return;
+    }
+    // 手を止めて決定: 同じ選択肢に dwellMs 留まったら決定。決定直後は cooldownMs 待ってから数え直す
+    if (idx !== DW.idx) { DW.idx = idx; DW.since = Math.max(now, DW.until); }
+    const p = Math.min(1, Math.max(0, (now - DW.since) / C.hand.dwellMs));
+    setDwell(idx, p);
+    if (p >= 1) {
+      DW.until = now + C.hand.cooldownMs;
+      DW.idx = -1;
+      S.inputs.add('hand');
+      pick(idx);
+    }
+  }
+
+  function renderHandUi() {
+    const on = S.hand.enabled && S.handState === 'ok';
+    $('#handhint').textContent = on ? C.hand.hint[S.hand.select] : '';
+    $('#handview').hidden = !on || S.hand.preview === 'none';
+    if (!on) ptr.hidden = true;
+  }
+
+  // hand.js (ES module) から使う窓口
+  window.FEST = {
+    settings: () => S.hand,
+    hand: onHand,
+    handState(st, err) {
+      S.handState = st;
+      S.handError = err ? String(err.message || err) : '';
+      renderHandUi();
+      renderAdmin();
+    },
+  };
+
   // マウス操作端末向け: 画面左下の領域を3秒間長押しすると管理パネルを表示
   const hot = $('#hot');
   hot.addEventListener('pointerdown', startHold);
@@ -600,6 +699,7 @@
       ['未送信キュー', outbox.length + ' 件'],
       ['ローカル保存', responses.length + ' 件'],
       ['CSV保存先', L.handle ? `${L.name}/responses.csv (${L.rows} 行)` : (L.error || (FSA ? '未選択' : '非対応'))],
+      ['カメラ', { off: 'OFF', loading: '準備中', ok: '動作中', error: 'エラー' }[S.handState] + (S.handError ? ` (${S.handError})` : '')],
       ['最終同期', S.lastSync || '-'],
       ['端末名', S.device],
       ['バージョン', C.appVersion],
@@ -607,6 +707,9 @@
     $('#admin-info').innerHTML = info.map(([k, v]) => `<dt>${k}</dt><dd>${String(v).replace(/</g, '&lt;')}</dd>`).join('');
     $('[data-a="test"]').textContent = 'テストモード: ' + (S.test ? 'ON' : 'OFF');
     $('[data-a="mute"]').textContent = '効果音: ' + (S.mute ? 'OFF' : 'ON');
+    $('[data-a="hand"]').textContent = 'カメラ: ' + (S.hand.enabled ? 'ON' : 'OFF');
+    $('[data-a="handsel"]').textContent = '決定: ' + { pinch: 'つまむ', dwell: '手を止める' }[S.hand.select];
+    $('[data-a="handview"]').textContent = '映像: ' + { skeleton: '骨格だけ', mirror: '鏡', none: 'なし' }[S.hand.preview];
   }
 
   const COLS = ['id', 'seq', 'status', 'is_test', 'party_size', 'attribute', 'with_kids', 'started_at', 'answered_at', 'duration_ms', 'q_ms', 'input', 'device', 'app_version'];
@@ -706,6 +809,21 @@
         closeAdmin();
         setTokenState('unset');
       }
+    } else if (a === 'hand') {
+      S.hand.enabled = !S.hand.enabled;
+      LS.set('hand.enabled', S.hand.enabled);
+      if (!window.HAND) FEST.handState('error', 'hand.js を読み込めていない');
+      else if (S.hand.enabled) window.HAND.start();
+      else { window.HAND.stop(); FEST.handState('off'); }
+    } else if (a === 'handsel') {
+      S.hand.select = S.hand.select === 'pinch' ? 'dwell' : 'pinch';
+      LS.set('hand.select', S.hand.select);
+      renderHandUi();
+    } else if (a === 'handview') {
+      const order = ['skeleton', 'mirror', 'none'];
+      S.hand.preview = order[(order.indexOf(S.hand.preview) + 1) % order.length];
+      LS.set('hand.preview', S.hand.preview);
+      renderHandUi();
     } else if (a === 'close') closeAdmin();
     renderAdmin();
   });
@@ -722,6 +840,9 @@
   setInterval(checkStatus, 5 * 60 * 1000);
 
   renderLocalState();
+  renderHandUi();
+  // hand.js は CDN の MediaPipe に依存する。読み込めないまま時間が経ったらエラーとして見せる
+  setTimeout(() => { if (S.hand.enabled && !window.HAND && S.handState !== 'error') FEST.handState('error', 'MediaPipe を読み込めない'); }, 20000);
   setTokenState(S.token ? 'unknown' : 'unset');
   checkStatus();
 })();

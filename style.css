@@ -89,7 +89,30 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 .options.enter .opt:nth-child(6) { animation-delay: .15s; }
 @keyframes rise { from { opacity: 0; transform: translateY(24px); } }
 
-.counter { font-size: clamp(16px, 1.6vw, 28px); color: var(--muted); text-align: right; min-height: 1.4em; }
+.bottom { display: flex; align-items: center; gap: 1.6vw; min-height: 1.4em; }
+.counter { font-size: clamp(16px, 1.6vw, 28px); color: var(--muted); text-align: right; margin-left: auto; }
+.handhint { font-size: clamp(16px, 1.6vw, 28px); font-weight: 700; }
+#handview { width: 160px; height: 120px; flex: none; border: 2px solid var(--ink); border-radius: 2px; }
+
+/* カメラ操作: 手の位置を示すリング。つまんでいるあいだは塗りつぶす */
+#handptr {
+  position: fixed; left: 0; top: 0;
+  width: 48px; height: 48px; margin: -24px 0 0 -24px;
+  border: 5px solid var(--accent); border-radius: 50%;
+  pointer-events: none;
+  z-index: 26;
+}
+#handptr.pinch { background: var(--accent); }
+
+/* カメラ操作 (手を止める): 決定までの進み具合をタイル下端のバーで見せる */
+.opt { position: relative; overflow: hidden; }
+.opt::after {
+  content: "";
+  position: absolute; left: 0; bottom: 0;
+  width: 100%; height: 10px;
+  background: var(--accent);
+  transform: scaleX(var(--dwell, 0)); transform-origin: left;
+}
 .counter b { color: var(--ink); font-size: 1.6em; margin: 0 .15em; font-variant-numeric: tabular-nums; }
 
 /* 結果画面 */
