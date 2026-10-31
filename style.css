@@ -5,7 +5,8 @@
   --muted: #666;
   --line: #e4e4e4;
   --bar: #c4c4c4;
-  --font: "BIZ UDPGothic", "BIZ UDPゴシック", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  /* 英数字は Google Sans、和文は Google が組み合わせて使う Noto Sans JP */
+  --font: "Google Sans", "Noto Sans JP", "BIZ UDPGothic", "Hiragino Sans", system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
