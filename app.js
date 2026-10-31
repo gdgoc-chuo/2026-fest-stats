@@ -138,7 +138,7 @@
     for (const p of parts) {
       p.vy += 0.45;
       p.vx *= 0.985;
-      p.x += p.vy;
+      p.x += p.vx;
       p.y += p.vy;
       p.r += p.vr;
       p.life -= 0.012;
