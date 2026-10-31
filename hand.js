@@ -124,10 +124,11 @@ function track(lm) {
     FEST.hand({ present: false });
     return;
   }
-  // 座標は手のひらの中心で算出 (ピンチ時の指先のブレによる隣接選択肢への誤移動を防止)
-  const palm = [0, 5, 9, 13, 17].map((i) => lm[i]);
-  const cx = palm.reduce((s, p) => s + p.x, 0) / palm.length;
-  const cy = palm.reduce((s, p) => s + p.y, 0) / palm.length;
+  // つまむ操作では、つまむ点 (親指と人差し指の先の中間) を座標にし、つまんだ場所がそのまま選ばれるようにする
+  // 手を止める操作では、指先より揺れにくい手のひらの中心を座標にする
+  const pts = FEST.settings().select === 'pinch' ? [4, 8].map((i) => lm[i]) : [0, 5, 9, 13, 17].map((i) => lm[i]);
+  const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+  const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
   const x = clamp(toScreenX(cx), innerWidth);
   const y = clamp(toScreenY(cy), innerHeight);
   sx = sx === null ? x : sx + (x - sx) * C.smooth;
