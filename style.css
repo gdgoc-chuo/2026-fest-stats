@@ -68,7 +68,7 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 /* 先頭の Google Sans の行の高さに合わせると和文が下がって見えるため、文字だけ少し上げてボタンと矢印の中央にそろえる */
 .backbtn span { transform: translateY(-.1em); }
 .backbtn.off { visibility: hidden; }
-.backbtn.cur, .backbtn:hover { background: var(--blue-strong); border-color: var(--blue-strong); color: var(--paper); }
+.backbtn.cur { background: var(--blue-strong); border-color: var(--blue-strong); color: var(--paper); }
 .backbtn::after {
   content: "";
   position: absolute; left: 0; bottom: 0;

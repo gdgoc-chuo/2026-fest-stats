@@ -342,10 +342,12 @@
     renderCounter();
   }
 
+  // 「戻る」に合わせている間は、選択肢の強調を消して、強調が1か所だけになるようにする
   function renderCursor() {
+    const onBack = $('#backbtn').classList.contains('cur');
     document.querySelectorAll('.opt').forEach((el, i) => {
-      el.classList.toggle('cur', i === S.cursor);
-      el.setAttribute('aria-selected', i === S.cursor);
+      el.classList.toggle('cur', !onBack && i === S.cursor);
+      el.setAttribute('aria-selected', !onBack && i === S.cursor);
     });
   }
 
@@ -591,7 +593,14 @@
     back();
   });
   $('#backbtn').addEventListener('pointerenter', (e) => {
-    if (e.pointerType === 'mouse' && !S.busy) sfx.backHover();
+    if (e.pointerType !== 'mouse' || S.busy) return;
+    $('#backbtn').classList.add('cur');
+    renderCursor();
+    sfx.backHover();
+  });
+  $('#backbtn').addEventListener('pointerleave', () => {
+    $('#backbtn').classList.remove('cur');
+    renderCursor();
   });
   $('#s-result').addEventListener('click', () => {
     if (!S.swallowClick) input('ok');
@@ -635,7 +644,7 @@
       lastTouchX = null;
       DW.idx = -1;
       if (S.screen === 'question') setDwell(-1, 0);
-      backBtn.classList.remove('cur');
+      if (backBtn.classList.contains('cur')) { backBtn.classList.remove('cur'); renderCursor(); }
       return;
     }
     ptr.style.transform = `translate(${h.x}px, ${h.y}px)`;
@@ -656,9 +665,15 @@
     if (S.busy) return;
     const idx = overBack(h.x, h.y) ? 'back' : optionAtX(h.x);
     if (idx === -1) return;
-    if (idx === 'back' && !backBtn.classList.contains('cur')) sfx.backHover();
+    const wasBack = backBtn.classList.contains('cur');
     backBtn.classList.toggle('cur', idx === 'back');
-    if (idx !== 'back' && idx !== S.cursor) { S.cursor = idx; renderCursor(); sfx.move(idx); }
+    if (idx === 'back') {
+      if (!wasBack) { renderCursor(); sfx.backHover(); }
+    } else if (idx !== S.cursor || wasBack) {
+      if (idx !== S.cursor) sfx.move(idx);
+      S.cursor = idx;
+      renderCursor();
+    }
     const go = () => {
       S.inputs.add('hand');
       if (idx === 'back') back();
