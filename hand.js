@@ -8,6 +8,7 @@ const MODEL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/h
 const C = window.CONFIG.hand;
 const FEST = window.FEST;
 const layer = document.querySelector('#handlayer');
+const armcover = document.querySelector('#armcover');
 const g = layer.getContext('2d');
 function fitLayer() {
   layer.width = innerWidth * devicePixelRatio;
@@ -149,18 +150,20 @@ function draw(lm) {
 
   if (mode === 'mirror') {
     // 映像もリングと同じ対応で画面全体に引き伸ばし、画面が見えるよう薄く重ねる
+    // 合図待ちの間は、白い覆いのすぐ下に映像をそのままの濃さで置き、覆い越しに自分の姿が見えるようにする
+    const waiting = !armcover.hidden;
     const left = toScreenX(1);
     const top = toScreenY(0);
     const w = toScreenX(0) - left;
     const h = toScreenY(1) - top;
     g.save();
-    g.globalAlpha = C.mirrorOpacity;
+    g.globalAlpha = waiting ? 1 : C.mirrorOpacity;
     g.translate(left + w, top);
     g.scale(-1, 1);
     g.drawImage(video, 0, 0, w, h);
     g.restore();
     // 映像の上に選択肢の輪郭を描き、映像越しでも選択肢の位置が分かるようにする
-    for (const el of document.querySelectorAll('#options .opt, #backbtn:not(.off), #res-back')) {
+    if (!waiting) for (const el of document.querySelectorAll('#options .opt, #backbtn:not(.off), #res-back')) {
       const r = el.getBoundingClientRect();
       if (!r.width) continue;
       const cur = el.classList.contains('cur');
