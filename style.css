@@ -278,12 +278,12 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 .demo-pinch .di { animation-name: di-pinch; }
 .demo-pinch .dt { animation-name: dt-pinch; }
 .demo-pinch .ring { animation-name: ring-pinch; }
-@keyframes ring-pinch { 0%, 68% { stroke-dasharray: 0 1; opacity: 1; } 82% { stroke-dasharray: 1 0; opacity: 1; } 88%, 100% { stroke-dasharray: 1 0; opacity: 0; } }
+@keyframes ring-pinch { 0%, 64% { stroke-dasharray: 0 1; opacity: 1; } 92% { stroke-dasharray: 1 0; opacity: 1; } 95%, 100% { stroke-dasharray: 1 0; opacity: 0; } }
 @keyframes mv { 0%, 55%, 100% { transform: translateX(0); } 15% { transform: translateX(-18px); } 40% { transform: translateX(18px); } }
-@keyframes fi-pinch { 0%, 60%, 90%, 100% { d: path("M46 66Q45 44 44 22"); } 68%, 82% { d: path("M46 66Q40 48 28 55"); } }
-@keyframes ft-pinch { 0%, 60%, 90%, 100% { d: path("M42 96Q28 82 18 66"); } 68%, 82% { d: path("M42 96Q30 78 28 58"); } }
-@keyframes di-pinch { 0%, 60%, 90%, 100% { cx: 44px; cy: 22px; } 68%, 82% { cx: 28px; cy: 55px; } }
-@keyframes dt-pinch { 0%, 60%, 90%, 100% { cx: 18px; cy: 66px; } 68%, 82% { cx: 28px; cy: 58px; } }
+@keyframes fi-pinch { 0%, 58%, 96%, 100% { d: path("M46 66Q45 44 44 22"); } 63%, 92% { d: path("M46 66Q40 48 28 55"); } }
+@keyframes ft-pinch { 0%, 58%, 96%, 100% { d: path("M42 96Q28 82 18 66"); } 63%, 92% { d: path("M42 96Q30 78 28 58"); } }
+@keyframes di-pinch { 0%, 58%, 96%, 100% { cx: 44px; cy: 22px; } 63%, 92% { cx: 28px; cy: 55px; } }
+@keyframes dt-pinch { 0%, 58%, 96%, 100% { cx: 18px; cy: 66px; } 63%, 92% { cx: 28px; cy: 58px; } }
 
 /* dwell: 左右に動かして止める → 手のまわりのリングが満ちる */
 .demo-dwell .dring { animation-name: dring; }

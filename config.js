@@ -51,7 +51,7 @@ window.CONFIG = {
     select: "pinch", // 決定方式: "pinch" (指をつまむ) | "dwell" (手を止める)
     preview: "skeleton", // 画面表示: "skeleton" (骨格のみ) | "mirror" (鏡像プレビュー) | "none" (非表示)
     startHoldMs: 1000, // 回答開始の合図: 待機中は、指をつまんだままこの時間 (ミリ秒) 続けるまで手の操作を受け付けない (通りがかりの手による誤反応を防ぐ)。0 で合図なし
-    pickHoldMs: 500, // pinch: つまんだままこの時間 (ミリ秒) 続けたら決定する
+    pickHoldMs: 1000, // pinch: つまんだままこの時間 (ミリ秒) 続けたら決定する
     dwellMs: 1500, // dwell: 決定に必要な滞留時間 (ミリ秒)
     cooldownMs: 800, // dwell: 決定後の次回判定開始までの待機時間 (ミリ秒)
     pinchOn: 0.35, // pinch: 親指と人差し指の距離比率がこの値を下回るとピンチ開始と判定
