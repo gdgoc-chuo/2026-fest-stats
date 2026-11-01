@@ -292,7 +292,9 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 #dot.unknown { background: #9aa0a6; }
 #dot.denied, #dot.unset { background: var(--red); }
 #ldot { position: fixed; left: 28px; bottom: 10px; width: 10px; height: 10px; background: var(--yellow); z-index: 30; }
-#dot.test::after { content: "TEST"; position: absolute; left: 36px; bottom: -3px; white-space: nowrap; font: 700 12px var(--font); color: var(--red); }
+#dot.mock { background: var(--blue); }
+#dot:not([data-label=""])::after { content: attr(data-label); position: absolute; left: 36px; bottom: -3px; white-space: nowrap; font: 700 12px var(--font); color: var(--blue); }
+#dot.test::after { color: var(--red); }
 #hot { position: fixed; left: 0; bottom: 0; width: 56px; height: 56px; z-index: 31; }
 
 /* 管理パネル起動用の長押しプログレスバー */

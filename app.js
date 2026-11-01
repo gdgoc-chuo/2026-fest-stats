@@ -294,7 +294,9 @@
   function setTokenState(st) {
     S.tokenState = st;
     const dot = $('#dot');
-    dot.className = (st === 'ok' ? '' : st) + (S.test ? ' test' : '');
+    // モックでは本番の GAS と通信していないことを、トークンの状態とは別に「MOCK」と示す
+    dot.className = (MOCK ? 'mock' : st === 'ok' ? '' : st) + (S.test ? ' test' : '');
+    dot.dataset.label = [MOCK && 'MOCK', S.test && 'TEST'].filter(Boolean).join(' ');
     if (st === 'unset') show('setup');
     else if (S.screen === 'setup' || !S.screen) resetSession();
     renderAdmin();
