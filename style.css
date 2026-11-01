@@ -153,12 +153,12 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 /* 回答開始の合図の待ち: リングを大きくし、つまんでいる時間に合わせて扇形に塗っていく */
 #handptr.arming {
   width: 88px; height: 88px; margin: -44px 0 0 -44px;
-  background: conic-gradient(var(--blue) calc(var(--arm, 0) * 1turn), rgba(255, 255, 255, .6) 0);
+  background: conic-gradient(var(--green) calc(var(--arm, 0) * 1turn), rgba(255, 255, 255, .6) 0);
 }
 /* つまんで決定するまでの長押し: リングを少し大きくし、つまんでいる時間に合わせて扇形に塗る */
 #handptr.holding {
   width: 64px; height: 64px; margin: -32px 0 0 -32px;
-  background: conic-gradient(var(--blue) calc(var(--arm, 0) * 1turn), rgba(255, 255, 255, .6) 0);
+  background: conic-gradient(var(--green) calc(var(--arm, 0) * 1turn), rgba(255, 255, 255, .6) 0);
 }
 
 /* カメラ操作 (手を止める): 滞留時間による決定進捗をタイル下端のバーで表示 */
@@ -251,7 +251,7 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 /* 指先の印は骨格表示と同じ色 (親指: 黄、人差し指: 赤) */
 .demo .dt { fill: var(--yellow); }
 .demo .di { fill: var(--red); }
-.demo .ring, .demo .dring { fill: none; stroke: var(--blue); stroke-width: 5; stroke-dasharray: 0 1; }
+.demo .ring, .demo .dring { fill: none; stroke: var(--green); stroke-width: 5; stroke-dasharray: 0 1; }
 
 /* wait: 開く → つまむ → つまんだまま1秒でリングが満ちる → 開く (3.2秒で1周) */
 .demo-wait * { animation-duration: 3.2s; animation-iteration-count: infinite; }
