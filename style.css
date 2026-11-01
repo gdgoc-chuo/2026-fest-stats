@@ -147,6 +147,11 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   z-index: 26;
 }
 #handptr.pinch { background: var(--blue); }
+/* 回答開始の合図の待ち: リングを大きくし、つまんでいる時間に合わせて扇形に塗っていく */
+#handptr.arming {
+  width: 88px; height: 88px; margin: -44px 0 0 -44px;
+  background: conic-gradient(var(--blue) calc(var(--arm, 0) * 1turn), rgba(255, 255, 255, .6) 0);
+}
 
 /* カメラ操作 (手を止める): 滞留時間による決定進捗をタイル下端のバーで表示 */
 .opt { position: relative; overflow: hidden; }

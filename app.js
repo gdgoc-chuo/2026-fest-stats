@@ -54,6 +54,7 @@
       preview: LS.get('hand.preview', C.hand.preview),
     },
     handState: 'off', // off | loading | ok | error
+    handReady: !(C.hand.startHoldMs > 0), // 回答開始の合図を受けて、手の操作を受け付けている状態か
     handError: '',
   };
   LS.set('device', S.device);
@@ -117,6 +118,7 @@
     backHover: () => tone(440, 0, 0.09, 'sine', 0.12),
     done: () => [0, 2, 4, 5].forEach((n, k) => tone(SCALE[n], k * 0.07, 0.3)),
     tick: () => tone(330, 0, 0.06, 'sine', 0.06),
+    start: () => [0, 2, 4].forEach((n, k) => tone(SCALE[n] * 2, k * 0.06, 0.18, 'sine', 0.12)),
   };
 
   // 演出エフェクト (幾何学パーティクルの放出)
@@ -314,6 +316,8 @@
     S.startedAt = null;
     S.inputs = new Set();
     S.busy = false;
+    S.handReady = !(C.hand.startHoldMs > 0);
+    renderHandHint();
     hideWarn();
     if (S.tokenState === 'unset') { show('setup'); return; }
     show('question');
@@ -612,6 +616,7 @@
   let lastPinch = false;
   let lastHandPick = 0;
   let lastTouchX = null;
+  let armSince = 0;
 
   // 選択肢は横一列配置のため、手のX座標に最も近い選択肢を選択対象と判定
   function optionAtX(x) {
@@ -642,6 +647,7 @@
     if (!active) {
       lastPinch = false;
       lastTouchX = null;
+      armSince = 0;
       DW.idx = -1;
       if (S.screen === 'question') setDwell(-1, 0);
       if (backBtn.classList.contains('cur')) { backBtn.classList.remove('cur'); renderCursor(); }
@@ -651,6 +657,28 @@
     ptr.classList.toggle('pinch', h.pinch);
     const rising = h.pinch && !lastPinch;
     lastPinch = h.pinch;
+
+    // 回答開始の合図: つまんだまま startHoldMs 続けるまでは、手で選択肢を動かしたり決めたりしない
+    // リングが合図の進み具合に合わせて塗られていき、満ちたら回答を始める
+    if (!S.handReady && S.screen === 'question') {
+      const now = performance.now();
+      if (!h.pinch) armSince = 0;
+      else if (!armSince) armSince = now;
+      const p = armSince ? Math.min(1, (now - armSince) / C.hand.startHoldMs) : 0;
+      ptr.classList.add('arming');
+      ptr.style.setProperty('--arm', p);
+      if (p < 1) return;
+      armSince = 0;
+      S.handReady = true;
+      ptr.classList.remove('arming');
+      renderHandHint();
+      touch();
+      sfx.start();
+      burst(h.x, h.y, 16, 0.6);
+      lastTouchX = h.x;
+      return;
+    }
+    ptr.classList.remove('arming');
 
     // 一定以上の手の移動またはピンチ動作のみを操作と判定 (手をかざしただけの通行人による誤開始を防止)
     if (lastTouchX === null || Math.abs(h.x - lastTouchX) > 40 || rising) {
@@ -699,9 +727,13 @@
     }
   }
 
+  function renderHandHint() {
+    const on = S.hand.enabled && S.handState === 'ok';
+    $('#handhint').textContent = !on ? '' : S.handReady ? C.hand.hint[S.hand.select] : C.hand.hint.start;
+  }
   function renderHandUi() {
     const on = S.hand.enabled && S.handState === 'ok';
-    $('#handhint').textContent = on ? C.hand.hint[S.hand.select] : '';
+    renderHandHint();
     $('#handlayer').hidden = !on || S.hand.preview === 'none';
     if (!on) ptr.hidden = true;
   }
