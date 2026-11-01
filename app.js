@@ -810,6 +810,21 @@
     }
   }
 
+  // 操作の手本の手 (2D)。指ごとに分けて描き、CSS のアニメーションで段階ごとの動きを見せる
+  // kind: wait (つまんだまま待つ) | pinch (左右に動かしてつまむ) | dwell (左右に動かして止める)
+  // 外側の太い線と内側の白い線を重ね、指と手のひらがつながった輪郭に見せる
+  function handDemo(kind) {
+    const parts = (tips) =>
+      '<rect x="38" y="60" width="54" height="56" rx="16"/><rect x="48" y="100" width="34" height="70"/>'
+      + '<path class="ft" d="M42 96Q28 82 18 66"/><path class="fi" d="M46 66Q45 44 44 22"/>'
+      + '<path d="M59 64Q59 39 59 14"/><path d="M72 66Q73 43 74 20"/><path d="M84 72Q87 54 90 36"/>'
+      + (tips ? '<circle class="dt" cx="18" cy="66" r="5"/><circle class="di" cx="44" cy="22" r="5"/>' : '');
+    return `<svg class="demo demo-${kind}" viewBox="-25 0 170 140" aria-hidden="true"><g class="mv">`
+      + `<g class="out">${parts(false)}</g><g class="in">${parts(true)}</g>`
+      + '<circle class="ring" cx="28" cy="56" r="14" pathLength="1" transform="rotate(-90 28 56)"/>'
+      + '<circle class="dring" cx="65" cy="80" r="44" pathLength="1" transform="rotate(-90 65 80)"/>'
+      + '</g></svg>';
+  }
   function renderHandHint() {
     const on = S.hand.enabled && S.handState === 'ok';
     // 覆いはカメラの準備 (認識ライブラリの読み込み) を待たずに最初から出し、準備に失敗したときだけ外す
@@ -817,7 +832,14 @@
     const cover = S.hand.enabled && S.handState !== 'error' && !S.handReady && S.screen === 'question' && !S.startedAt;
     $('#armcover').hidden = !cover;
     // 覆いの中央に案内を出している間は、下端の同じ案内を出さない
-    $('#handhint').textContent = !on || cover ? '' : S.handReady ? C.hand.hint[S.hand.select] : C.hand.hint.start;
+    const kind = !on || cover ? '' : S.handReady ? S.hand.select : 'wait';
+    const hint = $('#handhint');
+    // 同じ内容のときは書き換えず、手本のアニメーションが途中から始め直さないようにする
+    if (hint.dataset.kind !== kind) {
+      hint.dataset.kind = kind;
+      hint.innerHTML = kind ? `${handDemo(kind)}<span>${kind === 'wait' ? C.hand.hint.start : C.hand.hint[kind]}</span>` : '';
+    }
+    if (!$('#armdemo').firstChild) $('#armdemo').innerHTML = handDemo('wait');
     $('#armtext').innerHTML = C.hand.hint.start.replace('、', '、<wbr>');
   }
   function renderHandUi() {

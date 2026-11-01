@@ -132,7 +132,8 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 .bottom { display: flex; align-items: center; gap: 1.6vw; min-height: 1.4em; }
 .counter { font-size: clamp(16px, 1.6vw, 28px); color: var(--muted); text-align: right; margin-left: auto; }
 .counter b { color: var(--blue-strong); font-size: 1.6em; margin: 0 .15em; font-variant-numeric: tabular-nums; }
-.handhint { font-size: clamp(16px, 1.6vw, 28px); font-weight: 700; }
+.handhint { font-size: clamp(16px, 1.6vw, 28px); font-weight: 700; display: flex; align-items: center; gap: .6em; }
+.handhint .demo { height: 3.6em; width: auto; flex: none; }
 /* カメラ操作: 骨格・映像を画面全体に重ねる。リングと同じ座標の対応で描くので、指先とリングの位置がそろう */
 #handlayer { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15; }
 
@@ -232,6 +233,51 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   pointer-events: none;
   z-index: 25;
 }
+#armcover { flex-direction: column; gap: 3vh; }
+#armdemo .demo { height: clamp(140px, 28vh, 300px); width: auto; }
+
+/* 操作の手本の手。外側の太い線の上に内側の白い線を重ね、つながった輪郭に見せる */
+/* 手首は下端で切り、左右に動かす分の余白は viewBox に含めてある */
+.demo { overflow: hidden; }
+.demo .out path { fill: none; stroke: var(--ink); stroke-width: 15; stroke-linecap: round; }
+.demo .out rect { fill: var(--ink); stroke: var(--ink); stroke-width: 6; stroke-linejoin: round; }
+.demo .in path { fill: none; stroke: var(--paper); stroke-width: 9; stroke-linecap: round; }
+.demo .in rect { fill: var(--paper); }
+/* 指先の印は骨格表示と同じ色 (親指: 黄、人差し指: 赤) */
+.demo .dt { fill: var(--yellow); }
+.demo .di { fill: var(--red); }
+.demo .ring, .demo .dring { fill: none; stroke: var(--blue); stroke-width: 5; stroke-dasharray: 0 1; }
+
+/* wait: 開く → つまむ → つまんだまま1秒でリングが満ちる → 開く (3.2秒で1周) */
+.demo-wait * { animation-duration: 3.2s; animation-iteration-count: infinite; }
+.demo-wait .fi { animation-name: fi-wait; }
+.demo-wait .ft { animation-name: ft-wait; }
+.demo-wait .di { animation-name: di-wait; }
+.demo-wait .dt { animation-name: dt-wait; }
+.demo-wait .ring { animation-name: ring-wait; }
+@keyframes fi-wait { 0%, 20%, 85%, 100% { d: path("M46 66Q45 44 44 22"); } 30%, 75% { d: path("M46 66Q40 48 28 55"); } }
+@keyframes ft-wait { 0%, 20%, 85%, 100% { d: path("M42 96Q28 82 18 66"); } 30%, 75% { d: path("M42 96Q30 78 28 58"); } }
+@keyframes di-wait { 0%, 20%, 85%, 100% { cx: 44px; cy: 22px; } 30%, 75% { cx: 28px; cy: 55px; } }
+@keyframes dt-wait { 0%, 20%, 85%, 100% { cx: 18px; cy: 66px; } 30%, 75% { cx: 28px; cy: 58px; } }
+@keyframes ring-wait { 0%, 30% { stroke-dasharray: 0 1; opacity: 1; } 61%, 75% { stroke-dasharray: 1 0; opacity: 1; } 82%, 100% { stroke-dasharray: 1 0; opacity: 0; } }
+
+/* pinch: 左右に動かして止める → つまむ → 開く (3.6秒で1周) */
+.demo-pinch *, .demo-dwell * { animation-duration: 3.6s; animation-iteration-count: infinite; }
+.demo-pinch .mv, .demo-dwell .mv { animation-name: mv; }
+.demo-pinch .fi { animation-name: fi-pinch; }
+.demo-pinch .ft { animation-name: ft-pinch; }
+.demo-pinch .di { animation-name: di-pinch; }
+.demo-pinch .dt { animation-name: dt-pinch; }
+@keyframes mv { 0%, 55%, 100% { transform: translateX(0); } 15% { transform: translateX(-18px); } 40% { transform: translateX(18px); } }
+@keyframes fi-pinch { 0%, 60%, 90%, 100% { d: path("M46 66Q45 44 44 22"); } 68%, 82% { d: path("M46 66Q40 48 28 55"); } }
+@keyframes ft-pinch { 0%, 60%, 90%, 100% { d: path("M42 96Q28 82 18 66"); } 68%, 82% { d: path("M42 96Q30 78 28 58"); } }
+@keyframes di-pinch { 0%, 60%, 90%, 100% { cx: 44px; cy: 22px; } 68%, 82% { cx: 28px; cy: 55px; } }
+@keyframes dt-pinch { 0%, 60%, 90%, 100% { cx: 18px; cy: 66px; } 68%, 82% { cx: 28px; cy: 58px; } }
+
+/* dwell: 左右に動かして止める → 手のまわりのリングが満ちる */
+.demo-dwell .dring { animation-name: dring; }
+@keyframes dring { 0%, 58% { stroke-dasharray: 0 1; opacity: 1; } 90% { stroke-dasharray: 1 0; opacity: 1; } 97%, 100% { stroke-dasharray: 1 0; opacity: 0; } }
+
 #armcover p { font-size: clamp(28px, 3.6vw, 68px); font-weight: 700; text-align: center; line-height: 1.4; }
 #warn p { font-size: clamp(24px, 3vw, 56px); font-weight: 700; }
 #warn .warn-sub { font-size: clamp(18px, 2vw, 36px); font-weight: 400; color: var(--muted); }
@@ -331,4 +377,7 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
   .timer.run { animation-duration: var(--dur, 8s) !important; }
   #holdbar.run { animation-duration: var(--hold, 2s) !important; }
+  /* 操作の手本は動きそのものが説明なので止めない */
+  .demo-wait * { animation-duration: 3.2s !important; }
+  .demo-pinch *, .demo-dwell * { animation-duration: 3.6s !important; }
 }
