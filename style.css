@@ -164,6 +164,8 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 }
 
 /* 結果画面 */
+/* 結果画面の「戻る」: 設問画面の「戻る」と同じ位置に置く */
+#res-back { position: absolute; top: 4vh; left: 4vw; }
 #s-result {
   display: grid;
   grid-template-columns: 5fr 7fr;

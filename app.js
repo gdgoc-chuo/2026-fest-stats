@@ -311,6 +311,10 @@
 
   function resetSession() {
     clearTimeout(S.resultTimer);
+    if (S.pending) {
+      commit(S.pending);
+      S.pending = null;
+    }
     S.qi = 0;
     S.answers = {};
     S.qMs = {};
@@ -404,12 +408,10 @@
 
   function finish(status) {
     const now = new Date();
-    const seq = LS.get('seq', 0) + 1;
-    LS.set('seq', seq);
     const a = S.answers;
     const row = {
       id: uuid(),
-      seq,
+      seq: 0,
       status,
       is_test: S.test ? 1 : 0,
       party_size: a.party_size ?? '',
@@ -423,14 +425,35 @@
       device: S.device,
       app_version: C.appVersion,
     };
+    // 完了した回答は、結果画面の「戻る」で取り消せるよう、結果画面を離れるときに保存・送信する
+    if (status === 'complete') {
+      S.pending = row;
+      showResult(row);
+    } else {
+      commit(row);
+      resetSession();
+    }
+  }
+  function commit(row) {
+    row.seq = LS.get('seq', 0) + 1;
+    LS.set('seq', row.seq);
     responses.push(row);
     outbox.push(row.id);
     LS.set('responses', responses);
     LS.set('outbox', outbox);
     saveLocal(row);
     flush(true);
-    if (status === 'complete') showResult(row);
-    else resetSession();
+  }
+  // 結果画面の「戻る」: 回答を保存せずに取り消し、最後の設問へ戻って選び直せるようにする
+  function backFromResult() {
+    if (!S.pending || S.screen !== 'result') return;
+    clearTimeout(S.resultTimer);
+    S.pending = null;
+    S.last = Date.now();
+    sfx.back();
+    show('question');
+    S.qi = activeQs().length - 1;
+    renderQuestion();
   }
 
   function showResult(row) {
@@ -438,6 +461,7 @@
     hideWarn();
     S.resultAt = Date.now();
     const st = currentStats();
+    addRow(st, row);
     const n = st.groups;
 
     $('#res-n').innerHTML = `<span class="pre">本日</span>${n.toLocaleString()}<small>組目</small>`;
@@ -571,7 +595,8 @@
       } else if (act === 'back') back();
     } else if (S.screen === 'result') {
       // 最終設問での決定キー連打による結果画面の誤スキップを防止するため、一定時間待機
-      if (Date.now() - S.resultAt > 1200) resetSession();
+      if (act === 'back') backFromResult();
+      else if (Date.now() - S.resultAt > 1200) resetSession();
     }
   }
 
@@ -608,9 +633,19 @@
     $('#backbtn').classList.remove('cur');
     renderCursor();
   });
-  $('#s-result').addEventListener('click', () => {
-    if (!S.swallowClick) input('ok');
+  $('#s-result').addEventListener('click', (e) => {
+    if (S.swallowClick) return;
+    if (e.target.closest('#res-back')) {
+      S.inputs.add('mouse');
+      backFromResult();
+    } else input('ok');
   });
+  $('#res-back').addEventListener('pointerenter', (e) => {
+    if (e.pointerType !== 'mouse') return;
+    $('#res-back').classList.add('cur');
+    sfx.backHover();
+  });
+  $('#res-back').addEventListener('pointerleave', () => $('#res-back').classList.remove('cur'));
 
   // カメラ (手の骨格認識) 入力。hand.js から毎フレーム呼び出されるハンドラ
   const ptr = $('#handptr');
@@ -633,14 +668,17 @@
   }
   // 「戻る」ボタンは選択肢の列の外 (左上) にあるため、手の位置がボタンの周囲に入ったときだけ対象にする
   const backBtn = $('#backbtn');
+  const resBack = $('#res-back');
   function overBack(x, y) {
-    if (backBtn.classList.contains('off')) return false;
-    const r = backBtn.getBoundingClientRect();
+    const el = S.screen === 'result' ? resBack : backBtn;
+    if (el.classList.contains('off')) return false;
+    const r = el.getBoundingClientRect();
     return x > r.left - 40 && x < r.right + 40 && y > r.top - 40 && y < r.bottom + 40;
   }
   function setDwell(idx, p) {
     document.querySelectorAll('#options .opt').forEach((el, i) => el.style.setProperty('--dwell', i === idx ? p : 0));
     backBtn.style.setProperty('--dwell', idx === 'back' ? p : 0);
+    resBack.style.setProperty('--dwell', idx === 'back' ? p : 0);
   }
 
   function onHand(h) {
@@ -653,6 +691,8 @@
       DW.idx = -1;
       if (S.screen === 'question') setDwell(-1, 0);
       if (backBtn.classList.contains('cur')) { backBtn.classList.remove('cur'); renderCursor(); }
+      resBack.classList.remove('cur');
+      if (S.screen === 'result') setDwell(-1, 0);
       return;
     }
     ptr.style.transform = `translate(${h.x}px, ${h.y}px)`;
@@ -688,8 +728,30 @@
       if (touch()) return;
     }
 
+    // 結果画面: 「戻る」に合わせて決定すると回答を取り消して戻る。それ以外の場所でつまむとすぐ初期画面へ
     if (S.screen === 'result') {
-      if (rising && S.hand.select === 'pinch') { S.inputs.add('hand'); input('ok'); }
+      const onBack = overBack(h.x, h.y);
+      if (onBack && !resBack.classList.contains('cur')) sfx.backHover();
+      resBack.classList.toggle('cur', onBack);
+      const now = performance.now();
+      if (S.hand.select === 'pinch') {
+        if (rising) {
+          S.inputs.add('hand');
+          if (onBack) backFromResult();
+          else input('ok');
+        }
+        return;
+      }
+      if (!onBack) { DW.idx = -1; setDwell(-1, 0); return; }
+      if (DW.idx !== 'back') { DW.idx = 'back'; DW.since = Math.max(now, DW.until); }
+      const p = Math.min(1, Math.max(0, (now - DW.since) / C.hand.dwellMs));
+      setDwell('back', p);
+      if (p >= 1) {
+        DW.until = now + C.hand.cooldownMs;
+        DW.idx = -1;
+        S.inputs.add('hand');
+        backFromResult();
+      }
       return;
     }
     if (S.busy) return;
