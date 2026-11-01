@@ -121,8 +121,8 @@ window.CONFIG = {
         },
         {
           value: "general",
-          label: "その他<wbr>一般",
-          short: "その他一般",
+          label: "一般<wbr>来場",
+          short: "一般来場",
           icon: svg(
             '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/>',
           ),
