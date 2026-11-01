@@ -112,7 +112,9 @@
   const sfx = {
     move: (i) => tone(SCALE[i % SCALE.length], 0, 0.09, 'sine', 0.12),
     pick: (i) => { tone(SCALE[i % SCALE.length], 0, 0.16); tone(SCALE[i % SCALE.length] * 1.5, 0.02, 0.18, 'sine', 0.08); },
-    back: () => tone(392, 0, 0.1, 'sine', 0.1),
+    // 戻る: 決定音と逆に、高い音から低い音へ下がる2音
+    back: () => { tone(659.25, 0, 0.14); tone(440, 0.08, 0.2); },
+    backHover: () => tone(440, 0, 0.09, 'sine', 0.12),
     done: () => [0, 2, 4, 5].forEach((n, k) => tone(SCALE[n], k * 0.07, 0.3)),
     tick: () => tone(330, 0, 0.06, 'sine', 0.06),
   };
@@ -588,6 +590,9 @@
     S.inputs.add('mouse');
     back();
   });
+  $('#backbtn').addEventListener('pointerenter', (e) => {
+    if (e.pointerType === 'mouse' && !S.busy) sfx.backHover();
+  });
   $('#s-result').addEventListener('click', () => {
     if (!S.swallowClick) input('ok');
   });
@@ -651,6 +656,7 @@
     if (S.busy) return;
     const idx = overBack(h.x, h.y) ? 'back' : optionAtX(h.x);
     if (idx === -1) return;
+    if (idx === 'back' && !backBtn.classList.contains('cur')) sfx.backHover();
     backBtn.classList.toggle('cur', idx === 'back');
     if (idx !== 'back' && idx !== S.cursor) { S.cursor = idx; renderCursor(); sfx.move(idx); }
     const go = () => {
