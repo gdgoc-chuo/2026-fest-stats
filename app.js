@@ -669,8 +669,18 @@
   let pinchSince = 0;
   let pinchTarget = null;
   let pinchUsed = false;
-  function holdPinch(h, target) {
+  function holdPinch(h, target, rising) {
     const now = performance.now();
+    // 「戻る」は長押しせず、そこで新しくつまんだ瞬間に決定する (つまんだまま手を動かして来た場合は決定しない)
+    if (target === 'back') {
+      ptr.classList.remove('holding');
+      if (S.screen === 'question') setDwell(-1, 0);
+      pinchSince = 0;
+      if (!h.pinch) { pinchUsed = false; return false; }
+      if (!rising || pinchUsed) return false;
+      pinchUsed = true;
+      return true;
+    }
     if (!h.pinch) {
       pinchSince = 0;
       pinchUsed = false;
@@ -776,7 +786,7 @@
       resBack.classList.toggle('cur', onBack);
       const now = performance.now();
       if (S.hand.select === 'pinch') {
-        if (holdPinch(h, onBack ? 'back' : 'ok')) {
+        if (holdPinch(h, onBack ? 'back' : 'ok', rising)) {
           S.inputs.add('hand');
           if (onBack) backFromResult();
           else input('ok');
@@ -820,7 +830,7 @@
       return;
     }
     if (S.hand.select === 'pinch') {
-      if (holdPinch(h, idx)) go();
+      if (holdPinch(h, idx, rising)) go();
       return;
     }
     const now = performance.now();
