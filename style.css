@@ -255,6 +255,10 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 .demo-wait .di { animation-name: di-wait; }
 .demo-wait .dt { animation-name: dt-wait; }
 .demo-wait .ring { animation-name: ring-wait; }
+/* 合図の手本では、中指・薬指・小指を手のひらに折りたたみ、親指と人差し指だけでつまむ形にする */
+.demo-wait .fm { d: path("M59 64Q60 44 58 76"); }
+.demo-wait .fr { d: path("M72 66Q74 48 71 78"); }
+.demo-wait .fp { d: path("M84 72Q87 56 83 82"); }
 @keyframes fi-wait { 0%, 20%, 85%, 100% { d: path("M46 66Q45 44 44 22"); } 30%, 75% { d: path("M46 66Q40 48 28 55"); } }
 @keyframes ft-wait { 0%, 20%, 85%, 100% { d: path("M42 96Q28 82 18 66"); } 30%, 75% { d: path("M42 96Q30 78 28 58"); } }
 @keyframes di-wait { 0%, 20%, 85%, 100% { cx: 44px; cy: 22px; } 30%, 75% { cx: 28px; cy: 55px; } }

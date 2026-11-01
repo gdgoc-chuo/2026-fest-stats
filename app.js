@@ -817,7 +817,7 @@
     const parts = (tips) =>
       '<rect x="38" y="60" width="54" height="56" rx="16"/><rect x="48" y="100" width="34" height="70"/>'
       + '<path class="ft" d="M42 96Q28 82 18 66"/><path class="fi" d="M46 66Q45 44 44 22"/>'
-      + '<path d="M59 64Q59 39 59 14"/><path d="M72 66Q73 43 74 20"/><path d="M84 72Q87 54 90 36"/>'
+      + '<path class="fm" d="M59 64Q59 39 59 14"/><path class="fr" d="M72 66Q73 43 74 20"/><path class="fp" d="M84 72Q87 54 90 36"/>'
       + (tips ? '<circle class="dt" cx="18" cy="66" r="5"/><circle class="di" cx="44" cy="22" r="5"/>' : '');
     return `<svg class="demo demo-${kind}" viewBox="-25 0 170 140" aria-hidden="true"><g class="mv">`
       + `<g class="out">${parts(false)}</g><g class="in">${parts(true)}</g>`
