@@ -812,8 +812,9 @@
 
   function renderHandHint() {
     const on = S.hand.enabled && S.handState === 'ok';
+    // 覆いはカメラの準備 (認識ライブラリの読み込み) を待たずに最初から出し、準備に失敗したときだけ外す
     // マウス・キーボードで回答を始めた場合は、覆いを外してそのまま答えられるようにする
-    const cover = on && !S.handReady && S.screen === 'question' && !S.startedAt;
+    const cover = S.hand.enabled && S.handState !== 'error' && !S.handReady && S.screen === 'question' && !S.startedAt;
     $('#armcover').hidden = !cover;
     // 覆いの中央に案内を出している間は、下端の同じ案内を出さない
     $('#handhint').textContent = !on || cover ? '' : S.handReady ? C.hand.hint[S.hand.select] : C.hand.hint.start;
