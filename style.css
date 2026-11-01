@@ -155,6 +155,11 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   width: 88px; height: 88px; margin: -44px 0 0 -44px;
   background: conic-gradient(var(--blue) calc(var(--arm, 0) * 1turn), rgba(255, 255, 255, .6) 0);
 }
+/* つまんで決定するまでの長押し: リングを少し大きくし、つまんでいる時間に合わせて扇形に塗る */
+#handptr.holding {
+  width: 64px; height: 64px; margin: -32px 0 0 -32px;
+  background: conic-gradient(var(--blue) calc(var(--arm, 0) * 1turn), rgba(255, 255, 255, .6) 0);
+}
 
 /* カメラ操作 (手を止める): 滞留時間による決定進捗をタイル下端のバーで表示 */
 .opt { position: relative; overflow: hidden; }
@@ -272,6 +277,8 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 .demo-pinch .ft { animation-name: ft-pinch; }
 .demo-pinch .di { animation-name: di-pinch; }
 .demo-pinch .dt { animation-name: dt-pinch; }
+.demo-pinch .ring { animation-name: ring-pinch; }
+@keyframes ring-pinch { 0%, 68% { stroke-dasharray: 0 1; opacity: 1; } 82% { stroke-dasharray: 1 0; opacity: 1; } 88%, 100% { stroke-dasharray: 1 0; opacity: 0; } }
 @keyframes mv { 0%, 55%, 100% { transform: translateX(0); } 15% { transform: translateX(-18px); } 40% { transform: translateX(18px); } }
 @keyframes fi-pinch { 0%, 60%, 90%, 100% { d: path("M46 66Q45 44 44 22"); } 68%, 82% { d: path("M46 66Q40 48 28 55"); } }
 @keyframes ft-pinch { 0%, 60%, 90%, 100% { d: path("M42 96Q28 82 18 66"); } 68%, 82% { d: path("M42 96Q30 78 28 58"); } }

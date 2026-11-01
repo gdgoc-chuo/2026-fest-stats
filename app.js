@@ -664,7 +664,29 @@
   const ptr = $('#handptr');
   const DW = { idx: -1, since: 0, until: 0 };
   let lastPinch = false;
-  let lastHandPick = 0;
+  // つまんで決定: つまんだまま pickHoldMs 続けたら決定する (一瞬のつまみや指の形の乱れによる誤反応を防ぐ)
+  // 決定したあとは、一度指を開くまで次の決定をしない
+  let pinchSince = 0;
+  let pinchTarget = null;
+  let pinchUsed = false;
+  function holdPinch(h, target) {
+    const now = performance.now();
+    if (!h.pinch) {
+      pinchSince = 0;
+      pinchUsed = false;
+    } else if (!pinchUsed && (!pinchSince || target !== pinchTarget)) {
+      pinchSince = now;
+      pinchTarget = target;
+    }
+    const p = h.pinch && !pinchUsed && pinchSince ? Math.min(1, (now - pinchSince) / C.hand.pickHoldMs) : 0;
+    ptr.classList.toggle('holding', p > 0);
+    ptr.style.setProperty('--arm', p);
+    if (S.screen === 'question') setDwell(p > 0 ? target : -1, p);
+    if (p < 1) return false;
+    pinchUsed = true;
+    ptr.classList.remove('holding');
+    return true;
+  }
   let lastTouchX = null;
   let armSince = 0;
 
@@ -701,6 +723,9 @@
       lastPinch = false;
       lastTouchX = null;
       armSince = 0;
+      pinchSince = 0;
+      pinchUsed = false;
+      ptr.classList.remove('holding');
       DW.idx = -1;
       if (S.screen === 'question') setDwell(-1, 0);
       if (backBtn.classList.contains('cur')) { backBtn.classList.remove('cur'); renderCursor(); }
@@ -726,6 +751,7 @@
       ptr.style.setProperty('--arm', p);
       if (p < 1) return;
       armSince = 0;
+      pinchUsed = true;
       S.handReady = true;
       ptr.classList.remove('arming');
       renderHandHint();
@@ -750,7 +776,7 @@
       resBack.classList.toggle('cur', onBack);
       const now = performance.now();
       if (S.hand.select === 'pinch') {
-        if (rising) {
+        if (holdPinch(h, onBack ? 'back' : 'ok')) {
           S.inputs.add('hand');
           if (onBack) backFromResult();
           else input('ok');
@@ -793,14 +819,11 @@
       setDwell(-1, 0);
       return;
     }
-    const now = performance.now();
     if (S.hand.select === 'pinch') {
-      if (rising && now - lastHandPick > 500) {
-        lastHandPick = now;
-        go();
-      }
+      if (holdPinch(h, idx)) go();
       return;
     }
+    const now = performance.now();
     // 手を止めて決定 (dwell): 同一選択肢上に dwellMs 滞留で決定。決定後は cooldownMs 経過後に再判定を開始
     if (idx !== DW.idx) { DW.idx = idx; DW.since = Math.max(now, DW.until); }
     const p = Math.min(1, Math.max(0, (now - DW.since) / C.hand.dwellMs));
