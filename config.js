@@ -97,6 +97,14 @@ window.CONFIG = {
           icon: svg('<path d="M4 20l1-4L16 5l3 3L8 19z M14 7l3 3"/>'),
         },
         {
+          value: "general",
+          label: "一般<wbr>来場",
+          short: "一般来場",
+          icon: svg(
+            '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/>',
+          ),
+        },
+        {
           value: "alumni",
           label: "卒業生",
           short: "卒業生",
@@ -118,14 +126,6 @@ window.CONFIG = {
           short: "在学生の家族・友人",
           icon: svg(
             '<circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 20c0-3.5 2.7-6 6-6s6 2.5 6 6 M10 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/>',
-          ),
-        },
-        {
-          value: "general",
-          label: "一般<wbr>来場",
-          short: "一般来場",
-          icon: svg(
-            '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/>',
           ),
         },
       ],
