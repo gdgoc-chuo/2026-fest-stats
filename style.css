@@ -219,6 +219,16 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   z-index: 20;
 }
 .warn-n { font-size: clamp(120px, 24vw, 420px); font-weight: 700; line-height: 1; color: var(--red); font-variant-numeric: tabular-nums; }
+/* カメラ操作の回答開始の合図待ち: 画面全体を白く薄く覆い、合図の案内を中央に大きく出す。骨格とリングはこの上に描く */
+#armcover {
+  position: fixed; inset: 0;
+  background: rgba(255, 255, 255, .72);
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 8vw;
+  pointer-events: none;
+  z-index: 14;
+}
+#armcover p { font-size: clamp(28px, 3.6vw, 68px); font-weight: 700; text-align: center; line-height: 1.4; }
 #warn p { font-size: clamp(24px, 3vw, 56px); font-weight: 700; }
 #warn .warn-sub { font-size: clamp(18px, 2vw, 36px); font-weight: 400; color: var(--muted); }
 

@@ -304,6 +304,7 @@
   function show(name) {
     S.screen = name;
     for (const id of ['question', 'result', 'setup']) $('#s-' + id).hidden = id !== name;
+    renderHandHint();
   }
 
   const activeQs = () => C.questions.filter((q) => !q.skipIf || !q.skipIf(S.answers));
@@ -508,6 +509,7 @@
     if (S.screen === 'question' && !S.startedAt) {
       S.startedAt = new Date();
       S.qEnter = performance.now();
+      renderHandHint();
     }
     return false;
   }
@@ -729,7 +731,12 @@
 
   function renderHandHint() {
     const on = S.hand.enabled && S.handState === 'ok';
-    $('#handhint').textContent = !on ? '' : S.handReady ? C.hand.hint[S.hand.select] : C.hand.hint.start;
+    // マウス・キーボードで回答を始めた場合は、覆いを外してそのまま答えられるようにする
+    const cover = on && !S.handReady && S.screen === 'question' && !S.startedAt;
+    $('#armcover').hidden = !cover;
+    // 覆いの中央に案内を出している間は、下端の同じ案内を出さない
+    $('#handhint').textContent = !on || cover ? '' : S.handReady ? C.hand.hint[S.hand.select] : C.hand.hint.start;
+    $('#armtext').innerHTML = C.hand.hint.start.replace('、', '、<wbr>');
   }
   function renderHandUi() {
     const on = S.hand.enabled && S.handState === 'ok';
