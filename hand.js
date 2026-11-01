@@ -108,6 +108,27 @@ function stop() {
   FEST.hand({ present: false });
 }
 
+// 認識ライブラリ (MediaPipe) は、認識を続けるうちに内部で使うメモリが少しずつ増えていく (1分あたり約0.35MB)
+// 長時間の運用で重くならないよう、待機中で手が映っていないときに定期的に作り直し、古いものを解放する
+// 作り直しの間も古いもので認識を続けるので、操作は途切れない
+const REFRESH_MS = 20 * 60 * 1000;
+let lastRefresh = performance.now();
+let refreshing = false;
+async function refresh() {
+  if (refreshing || !landmarker) return;
+  refreshing = true;
+  try {
+    const fresh = await createLandmarker();
+    const old = landmarker;
+    landmarker = fresh;
+    old.close();
+  } catch {
+    // 作り直せなかったときは古いものを使い続け、次の機会にやり直す
+  }
+  lastRefresh = performance.now();
+  refreshing = false;
+}
+
 function loop() {
   if (!running) return;
   if (video.readyState >= 2 && video.currentTime !== lastFrame) {
@@ -116,6 +137,7 @@ function loop() {
     const lm = landmarker.detectForVideo(video, performance.now()).landmarks?.[0];
     track(lm);
     draw(lm);
+    if (!lm && performance.now() - lastRefresh > REFRESH_MS && FEST.idle()) refresh();
   }
   requestAnimationFrame(loop);
 }
@@ -213,5 +235,5 @@ function draw(lm) {
   }
 }
 
-window.HAND = { start, stop };
+window.HAND = { start, stop, refresh };
 if (FEST.settings().enabled) start();

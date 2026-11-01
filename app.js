@@ -854,6 +854,8 @@
     settings: () => S.hand,
     // 骨格・映像を描くのは来場者が操作する画面だけ (管理パネル表示中は描かない)
     active: () => $('#admin').hidden && (S.screen === 'question' || S.screen === 'result'),
+    // 誰も回答していない待機中か (認識ライブラリの作り直しなど、裏で重い処理をしてよいとき)
+    idle: () => $('#admin').hidden && S.screen === 'question' && !S.startedAt,
     hand: onHand,
     handState(st, err) {
       S.handState = st;
