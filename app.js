@@ -878,6 +878,10 @@
     cursorTimer = setTimeout(() => document.body.classList.add('hide-cursor'), 3000);
   });
 
+  // ブラウザは、クリックやキー操作が一度あるまで音を鳴らさない (手の操作は数に入らない)
+  // 管理パネルの操作や左下の長押しも含め、どこでクリック・キー操作されても音を使えるようにしておく
+  for (const type of ['pointerdown', 'keydown']) addEventListener(type, () => audio(), true);
+
   addEventListener('contextmenu', (e) => e.preventDefault());
   addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
 
