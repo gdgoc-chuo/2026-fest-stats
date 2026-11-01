@@ -25,6 +25,8 @@ let lastFrame = -1;
 let lastProgress = 0;
 let retryTimer = null;
 let pinched = false;
+// 手が端に寄ったり見失ったりしたあとは、一度指を開くまでつまみを受け付けない
+let needRelease = true;
 let sx = null;
 let sy = null;
 
@@ -121,6 +123,7 @@ function loop() {
 function track(lm) {
   if (!lm) {
     pinched = false;
+    needRelease = true;
     sx = sy = null;
     FEST.hand({ present: false });
     return;
@@ -130,16 +133,29 @@ function track(lm) {
   const pts = FEST.settings().select === 'pinch' ? [4, 8].map((i) => lm[i]) : [0, 5, 9, 13, 17].map((i) => lm[i]);
   const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
   const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
-  const x = clamp(toScreenX(cx), innerWidth);
-  const y = clamp(toScreenY(cy), innerHeight);
-  sx = sx === null ? x : sx + (x - sx) * C.smooth;
-  sy = sy === null ? y : sy + (y - sy) * C.smooth;
+  const rx = toScreenX(cx);
+  const ry = toScreenY(cy);
+  sx = sx === null ? clamp(rx, innerWidth) : sx + (clamp(rx, innerWidth) - sx) * C.smooth;
+  sy = sy === null ? clamp(ry, innerHeight) : sy + (clamp(ry, innerHeight) - sy) * C.smooth;
+
+  // 端の判定: 手の位置が画面の端の帯にあるか、つまみの判定に使う点 (手首・親指の先・人差し指の先・中指の付け根) が
+  // カメラの枠の外に出ているときは、決定の判定をしない。手が枠から外れかけると指の形が崩れ、つまんだと誤認されやすいため
+  const mx = innerWidth * C.edgeMargin;
+  const my = innerHeight * C.edgeMargin;
+  const edge = rx < mx || rx > innerWidth - mx || ry < my || ry > innerHeight - my
+    || [0, 4, 8, 9].some((i) => lm[i].x < 0 || lm[i].x > 1 || lm[i].y < 0 || lm[i].y > 1);
 
   const ratio = dist(lm[4], lm[8]) / Math.max(1e-6, dist(lm[0], lm[9]));
-  if (!pinched && ratio < C.pinchOn) pinched = true;
-  else if (pinched && ratio > C.pinchOff) pinched = false;
+  if (edge) {
+    pinched = false;
+    needRelease = true;
+  } else {
+    if (ratio > C.pinchOff) needRelease = false;
+    if (!pinched && !needRelease && ratio < C.pinchOn) pinched = true;
+    else if (pinched && ratio > C.pinchOff) pinched = false;
+  }
 
-  FEST.hand({ present: true, x: sx, y: sy, pinch: pinched });
+  FEST.hand({ present: true, x: sx, y: sy, pinch: pinched, edge });
 }
 
 function draw(lm) {

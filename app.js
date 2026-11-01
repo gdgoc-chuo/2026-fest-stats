@@ -708,6 +708,7 @@
     }
     ptr.style.transform = `translate(${h.x}px, ${h.y}px)`;
     ptr.classList.toggle('pinch', h.pinch);
+    ptr.classList.toggle('edge', !!h.edge);
     const rising = h.pinch && !lastPinch;
     lastPinch = h.pinch;
 
@@ -754,7 +755,7 @@
         }
         return;
       }
-      if (!onBack) { DW.idx = -1; setDwell(-1, 0); return; }
+      if (!onBack || h.edge) { DW.idx = -1; setDwell(-1, 0); return; }
       if (DW.idx !== 'back') { DW.idx = 'back'; DW.since = Math.max(now, DW.until); }
       const p = Math.min(1, Math.max(0, (now - DW.since) / C.hand.dwellMs));
       setDwell('back', p);
@@ -784,6 +785,12 @@
       else pick(idx, h);
     };
 
+    // 画面の端の帯では決定しない (手を止める操作の進み具合も戻す)
+    if (h.edge) {
+      DW.idx = -1;
+      setDwell(-1, 0);
+      return;
+    }
     const now = performance.now();
     if (S.hand.select === 'pinch') {
       if (rising && now - lastHandPick > 500) {

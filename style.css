@@ -147,6 +147,8 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
   z-index: 26;
 }
 #handptr.pinch { background: var(--blue); }
+/* 画面の端の帯にいて決定を受け付けない間は、リングを薄くして示す */
+#handptr.edge { opacity: .35; }
 /* 回答開始の合図の待ち: リングを大きくし、つまんでいる時間に合わせて扇形に塗っていく */
 #handptr.arming {
   width: 88px; height: 88px; margin: -44px 0 0 -44px;
