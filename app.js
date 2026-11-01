@@ -337,7 +337,7 @@
     S.qEnter = performance.now();
 
     $('#dots').innerHTML = qs.map((_, i) => `<i class="${i < S.qi ? 'done' : i === S.qi ? 'now' : ''}"></i>`).join('');
-    $('#backbtn').classList.toggle('off', S.qi === 0);
+    renderBack();
     $('#backbtn').classList.remove('cur');
     $('#prompt').innerHTML = q.prompt;
 
@@ -399,8 +399,18 @@
     }, 220);
   }
 
+  // 最初の設問では、回答を始めたあと (合図や操作のあと) だけ「戻る」を出し、押すと記録せずに合図待ちへ戻す
+  function renderBack() {
+    $('#backbtn').classList.toggle('off', S.qi === 0 && !S.startedAt);
+  }
   function back() {
-    if (S.busy || S.qi === 0) return;
+    if (S.busy) return;
+    if (S.qi === 0) {
+      if (!S.startedAt) return;
+      sfx.back();
+      resetSession();
+      return;
+    }
     S.qi--;
     sfx.back();
     renderQuestion();
@@ -534,6 +544,7 @@
       S.startedAt = new Date();
       S.qEnter = performance.now();
       renderHandHint();
+      renderBack();
     }
     return false;
   }
@@ -704,8 +715,9 @@
     // リングが合図の進み具合に合わせて塗られていき、満ちたら回答を始める
     if (!S.handReady && S.screen === 'question') {
       const now = performance.now();
+      // 合図は新しくつまみ始めたときから数える (戻るや結果画面でつまんだまま合図待ちになっても、すぐ始まらないようにする)
       if (!h.pinch) armSince = 0;
-      else if (!armSince) armSince = now;
+      else if (!armSince && rising) armSince = now;
       const p = armSince ? Math.min(1, (now - armSince) / C.hand.startHoldMs) : 0;
       ptr.classList.add('arming');
       ptr.style.setProperty('--arm', p);
